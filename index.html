@@ -828,8 +828,15 @@ function scrollGrade(dir){
   const el=document.getElementById("grade-scroll");
   if(!el) return;
   const amount=Math.max(160, Math.round(el.clientWidth*0.85))*dir;
-  if(el.scrollBy) el.scrollBy({left:amount, behavior:"smooth"});
-  else el.scrollLeft += amount;
+  const start=el.scrollLeft, target=Math.max(0, Math.min(el.scrollWidth-el.clientWidth, start+amount));
+  const dur=260, t0=performance.now();
+  function step(t){
+    const p=Math.min(1,(t-t0)/dur);
+    const ease=1-Math.pow(1-p,3);
+    el.scrollLeft=start+(target-start)*ease;
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
 const NAV_IDS=["nav-kpi","nav-graficos","nav-dimensionamento","nav-evolucao","nav-presenca","nav-grade","nav-resumo"];
