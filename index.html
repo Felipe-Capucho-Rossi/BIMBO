@@ -335,6 +335,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .tgrade tr:hover td.gt-tot{background:#DCE7F7!important}
 .tgrade td.gt-tot.gt-res{color:#fff!important;background:var(--indigo)!important}
 
+/* ── Formatação condicional: colunas de fim de semana (sáb/dom) ── */
+.tgrade th.th-weekend{background:#64748B}
+.tgrade td.td-weekend{background:#F1F5F9!important}
+.tgrade tr:nth-child(even) td.td-weekend{background:#E9EEF3!important}
+.tgrade tr:hover td.td-weekend{background:#E2E9F0!important}
+.th-weekend-swatch{background:#64748B}
+
 /* ── TABELA RESUMO ── */
 table.tdet{width:100%;border-collapse:collapse}
 table.tdet thead tr{background:var(--indigo);color:#fff;position:sticky;top:0;z-index:1}
@@ -494,26 +501,26 @@ img,svg{max-width:100%}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
       <span class="sb-item-txt">Visão Geral</span>
     </div>
-    <div class="sb-item" id="nav-graficos" onclick="navTo('sec-graficos',1)">
+    <div class="sb-item" id="nav-grade" onclick="navTo('sec-grade',1)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+      <span class="sb-item-txt">Grade Diária</span>
+    </div>
+    <div class="sb-item" id="nav-graficos" onclick="navTo('sec-graficos',2)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       <span class="sb-item-txt">Gráficos</span>
     </div>
-    <div class="sb-item" id="nav-dimensionamento" onclick="navTo('sec-dimensionamento',2)">
+    <div class="sb-item" id="nav-dimensionamento" onclick="navTo('sec-dimensionamento',3)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h12M3 18h8"/><rect x="15" y="10" width="6" height="10" rx="1" fill="currentColor" opacity=".3"/><rect x="19" y="6" width="2" height="14" rx="1" fill="currentColor" opacity=".5"/></svg>
       <span class="sb-item-txt">Dimensionamento</span>
     </div>
-        <div class="sb-item" id="nav-evolucao" onclick="navTo('sec-evolucao',3)">
+        <div class="sb-item" id="nav-evolucao" onclick="navTo('sec-evolucao',4)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
       <span class="sb-item-txt">Evolução</span>
     </div>
     <div class="sb-sec">Controle</div>
-    <div class="sb-item" id="nav-presenca" onclick="navTo('sec-presenca',4)">
+    <div class="sb-item" id="nav-presenca" onclick="navTo('sec-presenca',5)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
       <span class="sb-item-txt">Presença Diária</span>
-    </div>
-        <div class="sb-item" id="nav-grade" onclick="navTo('sec-grade',5)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
-      <span class="sb-item-txt">Grade Diária</span>
     </div>
     <div class="sb-item" id="nav-resumo" onclick="navTo('sec-resumo',6)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
@@ -575,6 +582,35 @@ img,svg{max-width:100%}
       <div class="sec-head"><span class="sec-title">Indicadores Gerais</span><div class="sec-line"></div></div>
       <div class="kpi-grid" id="kpi-row"></div>
     </div>
+
+    <!-- GRADE DIÁRIA / CONTROLE DIÁRIO DE PRESENÇA -->
+    <div id="sec-grade" style="scroll-margin-top:130px">
+      <div class="sec-head"><span class="sec-title">Controle Di&#225;rio de Presen&#231;a</span><div class="sec-line"></div>
+        <span style="font-size:11px;color:var(--tx-muted);white-space:nowrap">Marca&#231;&#245;es por colaborador · Estilo planilha</span>
+      </div>
+      <div class="tbl-card">
+        <div class="tbl-head">
+          <h3>Grade de Marca&#231;&#245;es</h3>
+          <span>P = Presente · FJ = Falta Justificada · FI = Falta Injustificada · AT = Atestado · Use os filtros para navegar</span>
+        </div>
+        <div class="grade-nav">
+          <button type="button" class="gnav-btn" onclick="scrollGrade(-1)" aria-label="Rolar para esquerda">‹</button>
+          <span class="gnav-hint">Arraste a tabela ou use as setas para ver os dias do mês →</span>
+          <button type="button" class="gnav-btn" onclick="scrollGrade(1)" aria-label="Rolar para direita">›</button>
+        </div>
+        <div class="grade-legend">
+          <span class="gl-item"><span class="gl-box mc-p"></span>Presente</span>
+          <span class="gl-item"><span class="gl-box mc-fj"></span>FJ</span>
+          <span class="gl-item"><span class="gl-box mc-fi"></span>FI / AT</span>
+          <span class="gl-item"><span class="gl-box mc-flg"></span>Folga</span>
+          <span class="gl-item"><span class="gl-box mc-fer"></span>Feriado</span>
+          <span class="gl-item"><span class="gl-box mc-d"></span>Desligado</span>
+          <span class="gl-item"><span class="gl-box th-weekend-swatch"></span>Fim de semana</span>
+        </div>
+        <div class="tbl-scroll" id="grade-scroll"><div id="grade-inner"></div></div>
+      </div>
+    </div>
+    <!-- ════════════════════════════════════════ -->
 
     <!-- ══ DIMENSIONAMENTO vs PRESENÇA REAL ══ -->
     <div id="sec-dimensionamento" style="scroll-margin-top:130px">
@@ -686,8 +722,7 @@ img,svg{max-width:100%}
       </div>
     </div>
 
-    <!-- GRADE DIÁRIA -->
-        <!-- ══ PRESENÇA DIÁRIA ══ -->
+    <!-- ══ PRESENÇA DIÁRIA ══ -->
     <div id="sec-presenca" style="scroll-margin-top:130px">
       <div class="sec-head">
         <span class="sec-title">Presença Diária · Quadro Solicitado × Totais Mensais × Movimentações</span>
@@ -738,32 +773,6 @@ img,svg{max-width:100%}
     </div>
     <!-- ════════════════════════════════════════ -->
 
-
-    <div id="sec-grade" style="scroll-margin-top:130px">
-      <div class="sec-head"><span class="sec-title">Controle Di&#225;rio de Presen&#231;a</span><div class="sec-line"></div>
-        <span style="font-size:11px;color:var(--tx-muted);white-space:nowrap">Marca&#231;&#245;es por colaborador · Estilo planilha</span>
-      </div>
-      <div class="tbl-card">
-        <div class="tbl-head">
-          <h3>Grade de Marca&#231;&#245;es</h3>
-          <span>P = Presente · FJ = Falta Justificada · FI = Falta Injustificada · AT = Atestado · Use os filtros para navegar</span>
-        </div>
-        <div class="grade-nav">
-          <button type="button" class="gnav-btn" onclick="scrollGrade(-1)" aria-label="Rolar para esquerda">‹</button>
-          <span class="gnav-hint">Arraste a tabela ou use as setas para ver os dias do mês →</span>
-          <button type="button" class="gnav-btn" onclick="scrollGrade(1)" aria-label="Rolar para direita">›</button>
-        </div>
-        <div class="grade-legend">
-          <span class="gl-item"><span class="gl-box mc-p"></span>Presente</span>
-          <span class="gl-item"><span class="gl-box mc-fj"></span>FJ</span>
-          <span class="gl-item"><span class="gl-box mc-fi"></span>FI / AT</span>
-          <span class="gl-item"><span class="gl-box mc-flg"></span>Folga</span>
-          <span class="gl-item"><span class="gl-box mc-fer"></span>Feriado</span>
-          <span class="gl-item"><span class="gl-box mc-d"></span>Desligado</span>
-        </div>
-        <div class="tbl-scroll" id="grade-scroll"><div id="grade-inner"></div></div>
-      </div>
-    </div>
 
     <!-- RESUMO -->
     <div id="sec-resumo" style="scroll-margin-top:130px">
@@ -832,7 +841,7 @@ function scrollGrade(dir){
   el.scrollLeft=target;
 }
 
-const NAV_IDS=["nav-kpi","nav-graficos","nav-dimensionamento","nav-evolucao","nav-presenca","nav-grade","nav-resumo"];
+const NAV_IDS=["nav-kpi","nav-grade","nav-graficos","nav-dimensionamento","nav-evolucao","nav-presenca","nav-resumo"];
 function navTo(sectionId, navIdx){
   closeMobileNav();
   // Activar item sidebar
@@ -1061,6 +1070,13 @@ function render(){
   /* GRADE */
   const gWrapper=document.getElementById("grade-inner");
   if(!blocos.length){gWrapper.innerHTML='<p style="padding:20px;color:#8FA8C4">Selecione filtros para ver a grade.</p>';return;}
+  const WD_ABBR=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+  const diaInfo=d=>{
+    const p=d.split("/");const dd=parseInt(p[0],10),mm=parseInt(p[1],10);
+    const wd=new Date(2026,mm-1,dd).getDay();
+    return{label:`${d}/26, ${WD_ABBR[wd]}`,weekend:wd===0||wd===6};
+  };
+  const diasInfo=diasOrdem.map(diaInfo);
   let rp=[],rfj=[],rfi=[],rflg=[],rfer=[],rd=[];
   diasOrdem.forEach(()=>{rp.push(0);rfj.push(0);rfi.push(0);rflg.push(0);rfer.push(0);rd.push(0);});
   let gRows="";
@@ -1072,7 +1088,8 @@ function render(){
       gRows+=`<td>${b.unidade}</td><td>${col.cargo}</td><td>${col.turno}</td>`;
       let cP=0,cFJ=0,cFI=0,cFLG=0;
       diasOrdem.forEach((d,di)=>{
-        const m=col.dias[d];if(!m){gRows+='<td><span class="mc-dot">·</span></td>';return;}
+        const tdCls=diasInfo[di].weekend?" td-weekend":"";
+        const m=col.dias[d];if(!m){gRows+=`<td class="${tdCls.trim()}"><span class="mc-dot">·</span></td>`;return;}
         let cls="mc ";
         if(m==="P"){cls+="mc-p";rp[di]++;cP++;}
         else if(m==="FJ"){cls+="mc-fj";rfj[di]++;cFJ++;}
@@ -1084,7 +1101,7 @@ function render(){
         else if(m==="INT")cls+="mc-int";
         else cls+="mc-dot";
         const lbl=m==="P"?"✓":m==="FOLGA"?"FLG":m==="FER"?"FER":m;
-        gRows+=`<td><span class="${cls}">${lbl}</span></td>`;
+        gRows+=`<td class="${tdCls.trim()}"><span class="${cls}">${lbl}</span></td>`;
       });
       gTotP+=cP;gTotFJ+=cFJ;gTotFI+=cFI;gTotFLG+=cFLG;
       gRows+=`<td class="gt-tot">${cP}</td><td class="gt-tot">${cFJ||"—"}</td><td class="gt-tot">${cFI||"—"}</td><td class="gt-tot">${cFLG||"—"}</td>`;
@@ -1116,7 +1133,7 @@ function render(){
   r6+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
   r7+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
   r4+=`<td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td></tr>`;
-  const thDs=diasOrdem.map(d=>`<th>${d.substring(0,5)}</th>`).join("");
+  const thDs=diasInfo.map(info=>`<th class="${info.weekend?"th-weekend":""}">${info.label}</th>`).join("");
   gWrapper.innerHTML=`<table class="tgrade"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Cargo</th><th>Turno</th>${thDs}<th class="gt-tot">Total<br>Pres.</th><th class="gt-tot">Total<br>FJ</th><th class="gt-tot">Total<br>FI</th><th class="gt-tot">Total<br>Folgas</th></tr></thead><tbody>${r1}${r2}${r3}${r5}${r6}${r7}${r4}${gRows}</tbody></table>`;
 
   /* TABELA RESUMO */
