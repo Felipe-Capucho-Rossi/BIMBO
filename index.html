@@ -278,7 +278,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
   background:#F8FAFC;border-bottom:1px solid var(--border-light)}
 .gl-item{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--tx-secondary)}
 .gl-box{width:20px;height:15px;border-radius:3px}
-.tbl-scroll{overflow:auto;max-height:460px;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+.tbl-scroll{overflow:auto;max-height:460px;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;overscroll-behavior-x:contain}
+.grade-nav{display:none;align-items:center;gap:10px;padding:8px 16px;background:#F8FAFC;
+  border-bottom:1px solid var(--border-light)}
+.gnav-btn{width:34px;height:34px;flex:0 0 34px;border-radius:7px;border:1.5px solid var(--border);
+  background:#fff;color:var(--indigo);font-size:19px;font-weight:800;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.gnav-btn:active{background:var(--blue-light);border-color:var(--blue);transform:scale(.94)}
+.gnav-hint{font-size:11px;color:var(--tx-muted);flex:1}
 .tgrade{border-collapse:collapse;min-width:100%;font-size:11.5px}
 .tgrade th{background:var(--indigo);color:#fff;padding:7px 8px;text-align:center;font-weight:700;
   font-size:10px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;
@@ -393,6 +400,16 @@ img,svg{max-width:100%}
   .dim-cards-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
   .pres-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
   .sec-title{font-size:11px}
+  .grade-nav{display:flex}
+  /* Congelar colunas (position:sticky + left) junto com overflow:auto tem bugs
+     conhecidos em navegadores mobile (Safari/Chrome/Samsung Internet), fazendo o
+     scroll horizontal por toque parar de responder. Em telas pequenas removemos o
+     "congelamento" das 4 primeiras colunas — a tabela passa a rolar inteira,
+     de forma 100% confiável, e o cabeçalho continua fixo no topo (position:sticky;top). */
+  .tgrade th:first-child,.tgrade th:nth-child(2),.tgrade th:nth-child(3),.tgrade th:nth-child(4),
+  .tgrade td:first-child,.tgrade td:nth-child(2),.tgrade td:nth-child(3),.tgrade td:nth-child(4){
+    position:static!important;min-width:0!important;
+  }
 }
 
 /* ── Celulares (≤640px): sidebar vira gaveta (drawer) off-canvas, some 100% quando fechada ── */
@@ -731,6 +748,11 @@ img,svg{max-width:100%}
           <h3>Grade de Marca&#231;&#245;es</h3>
           <span>P = Presente · FJ = Falta Justificada · FI = Falta Injustificada · AT = Atestado · Use os filtros para navegar</span>
         </div>
+        <div class="grade-nav">
+          <button type="button" class="gnav-btn" onclick="scrollGrade(-1)" aria-label="Rolar para esquerda">‹</button>
+          <span class="gnav-hint">Arraste a tabela ou use as setas para ver os dias do mês →</span>
+          <button type="button" class="gnav-btn" onclick="scrollGrade(1)" aria-label="Rolar para direita">›</button>
+        </div>
         <div class="grade-legend">
           <span class="gl-item"><span class="gl-box mc-p"></span>Presente</span>
           <span class="gl-item"><span class="gl-box mc-fj"></span>FJ</span>
@@ -739,7 +761,7 @@ img,svg{max-width:100%}
           <span class="gl-item"><span class="gl-box mc-fer"></span>Feriado</span>
           <span class="gl-item"><span class="gl-box mc-d"></span>Desligado</span>
         </div>
-        <div class="tbl-scroll"><div id="grade-inner"></div></div>
+        <div class="tbl-scroll" id="grade-scroll"><div id="grade-inner"></div></div>
       </div>
     </div>
 
@@ -801,6 +823,14 @@ function closeMobileNav(){
   document.getElementById("sb-backdrop").classList.remove("show");
 }
 window.addEventListener("resize",()=>{ if(window.innerWidth>640) closeMobileNav(); });
+
+function scrollGrade(dir){
+  const el=document.getElementById("grade-scroll");
+  if(!el) return;
+  const amount=Math.max(160, Math.round(el.clientWidth*0.85))*dir;
+  if(el.scrollBy) el.scrollBy({left:amount, behavior:"smooth"});
+  else el.scrollLeft += amount;
+}
 
 const NAV_IDS=["nav-kpi","nav-graficos","nav-dimensionamento","nav-evolucao","nav-presenca","nav-grade","nav-resumo"];
 function navTo(sectionId, navIdx){
