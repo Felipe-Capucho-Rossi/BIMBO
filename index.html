@@ -278,7 +278,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
   background:#F8FAFC;border-bottom:1px solid var(--border-light)}
 .gl-item{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--tx-secondary)}
 .gl-box{width:20px;height:15px;border-radius:3px}
-.tbl-scroll{overflow:auto;max-height:460px}
+.tbl-scroll{overflow:auto;max-height:460px;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
 .tgrade{border-collapse:collapse;min-width:100%;font-size:11.5px}
 .tgrade th{background:var(--indigo);color:#fff;padding:7px 8px;text-align:center;font-weight:700;
   font-size:10px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;
@@ -316,7 +316,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .tr-res td.r-p{color:var(--blue)!important;background:var(--blue-light)!important}
 .tr-res td.r-fj{color:var(--amber)!important;background:var(--amber-bg)!important}
 .tr-res td.r-fi{color:var(--red)!important;background:var(--red-bg)!important}
+.tr-res td.r-flg{color:var(--green)!important;background:var(--green-bg)!important}
+.tr-res td.r-fer{color:#64748B!important;background:#F1F5F9!important}
+.tr-res td.r-d{color:#94A3B8!important;background:#F1F5F9!important}
 .tr-res td.r-tx{background:var(--indigo)!important;color:#fff!important}
+
+/* ── Colunas de totais mensais por colaborador (fim da Grade Diária) ── */
+.tgrade th.gt-tot,.tgrade td.gt-tot{background:#EEF2F7;font-weight:800;
+  border-left:2px solid var(--indigo);color:var(--indigo)}
+.tgrade tr:nth-child(even) td.gt-tot{background:#E4EAF3}
+.tgrade tr:hover td.gt-tot{background:#DCE7F7!important}
+.tgrade td.gt-tot.gt-res{color:#fff!important;background:var(--indigo)!important}
 
 /* ── TABELA RESUMO ── */
 table.tdet{width:100%;border-collapse:collapse}
@@ -1021,28 +1031,33 @@ function render(){
   /* GRADE */
   const gWrapper=document.getElementById("grade-inner");
   if(!blocos.length){gWrapper.innerHTML='<p style="padding:20px;color:#8FA8C4">Selecione filtros para ver a grade.</p>';return;}
-  let rp=[],rfj=[],rfi=[];diasOrdem.forEach(()=>{rp.push(0);rfj.push(0);rfi.push(0);});
+  let rp=[],rfj=[],rfi=[],rflg=[],rfer=[],rd=[];
+  diasOrdem.forEach(()=>{rp.push(0);rfj.push(0);rfi.push(0);rflg.push(0);rfer.push(0);rd.push(0);});
   let gRows="";
+  let gTotP=0,gTotFJ=0,gTotFI=0,gTotFLG=0;
   blocos.forEach(b=>{
     const colab=b.colaboradores.filter(cc=>!f.c||cc.cargo===f.c);
     colab.forEach(col=>{
       gRows+=`<tr><td title="${col.nome}">${col.nome.length>18?col.nome.substring(0,16)+"…":col.nome}</td>`;
       gRows+=`<td>${b.unidade}</td><td>${col.cargo}</td><td>${col.turno}</td>`;
+      let cP=0,cFJ=0,cFI=0,cFLG=0;
       diasOrdem.forEach((d,di)=>{
         const m=col.dias[d];if(!m){gRows+='<td><span class="mc-dot">·</span></td>';return;}
         let cls="mc ";
-        if(m==="P"){cls+="mc-p";rp[di]++;}
-        else if(m==="FJ"){cls+="mc-fj";rfj[di]++;}
-        else if(m==="FI"){cls+="mc-fi";rfi[di]++;}
-        else if(m==="AT"){cls+="mc-at";rfi[di]++;}
-        else if(m==="FOLGA")cls+="mc-flg";
-        else if(m==="FER")cls+="mc-fer";
-        else if(m==="D")cls+="mc-d";
+        if(m==="P"){cls+="mc-p";rp[di]++;cP++;}
+        else if(m==="FJ"){cls+="mc-fj";rfj[di]++;cFJ++;}
+        else if(m==="FI"){cls+="mc-fi";rfi[di]++;cFI++;}
+        else if(m==="AT"){cls+="mc-at";rfi[di]++;cFI++;}
+        else if(m==="FOLGA"){cls+="mc-flg";rflg[di]++;cFLG++;}
+        else if(m==="FER"){cls+="mc-fer";rfer[di]++;}
+        else if(m==="D"){cls+="mc-d";rd[di]++;}
         else if(m==="INT")cls+="mc-int";
         else cls+="mc-dot";
         const lbl=m==="P"?"✓":m==="FOLGA"?"FLG":m==="FER"?"FER":m;
         gRows+=`<td><span class="${cls}">${lbl}</span></td>`;
       });
+      gTotP+=cP;gTotFJ+=cFJ;gTotFI+=cFI;gTotFLG+=cFLG;
+      gRows+=`<td class="gt-tot">${cP}</td><td class="gt-tot">${cFJ||"—"}</td><td class="gt-tot">${cFI||"—"}</td><td class="gt-tot">${cFLG||"—"}</td>`;
       gRows+="</tr>";
     });
   });
@@ -1050,17 +1065,29 @@ function render(){
   let r1=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px">Presenças</td>`;
   let r2=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px">FJ</td>`;
   let r3=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px">FI</td>`;
+  let r5=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px">Folga</td>`;
+  let r6=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px">Feriado</td>`;
+  let r7=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px">Desligado</td>`;
   let r4=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px;background:var(--indigo)!important;color:#fff!important">% Presença</td>`;
   diasOrdem.forEach((d,di)=>{
     const tx=cR(rp[di],rfj[di],rfi[di]);
     r1+=`<td class="r-p">${rp[di]}</td>`;
     r2+=`<td class="r-fj">${rfj[di]||""}</td>`;
     r3+=`<td class="r-fi">${rfi[di]||""}</td>`;
+    r5+=`<td class="r-flg">${rflg[di]||""}</td>`;
+    r6+=`<td class="r-fer">${rfer[di]||""}</td>`;
+    r7+=`<td class="r-d">${rd[di]||""}</td>`;
     r4+=`<td class="r-tx">${tx!=null?tx+"%":""}</td>`;
   });
-  r1+="</tr>";r2+="</tr>";r3+="</tr>";r4+="</tr>";
+  r1+=`<td class="gt-tot gt-res">${gTotP}</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
+  r2+=`<td class="gt-tot">—</td><td class="gt-tot gt-res">${gTotFJ}</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
+  r3+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot gt-res">${gTotFI}</td><td class="gt-tot">—</td></tr>`;
+  r5+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot gt-res">${gTotFLG}</td></tr>`;
+  r6+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
+  r7+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
+  r4+=`<td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td></tr>`;
   const thDs=diasOrdem.map(d=>`<th>${d.substring(0,5)}</th>`).join("");
-  gWrapper.innerHTML=`<div style="overflow:auto;max-height:450px"><table class="tgrade"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Cargo</th><th>Turno</th>${thDs}</tr></thead><tbody>${r1}${r2}${r3}${r4}${gRows}</tbody></table></div>`;
+  gWrapper.innerHTML=`<table class="tgrade"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Cargo</th><th>Turno</th>${thDs}<th class="gt-tot">Total<br>Pres.</th><th class="gt-tot">Total<br>FJ</th><th class="gt-tot">Total<br>FI</th><th class="gt-tot">Total<br>Folgas</th></tr></thead><tbody>${r1}${r2}${r3}${r5}${r6}${r7}${r4}${gRows}</tbody></table>`;
 
   /* TABELA RESUMO */
   const grupos={};
