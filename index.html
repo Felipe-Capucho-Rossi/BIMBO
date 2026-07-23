@@ -321,12 +321,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .mc-dot{color:#CBD5E1;font-size:10px}
 .tr-res td{font-size:10.5px;font-weight:700;background:#EEF2F7!important;
   border-top:2px solid var(--indigo)}
-.tr-res td.r-p{color:var(--blue)!important;background:var(--blue-light)!important}
-.tr-res td.r-fj{color:var(--amber)!important;background:var(--amber-bg)!important}
-.tr-res td.r-fi{color:var(--red)!important;background:var(--red-bg)!important}
-.tr-res td.r-flg{color:var(--green)!important;background:var(--green-bg)!important}
-.tr-res td.r-fer{color:#64748B!important;background:#F1F5F9!important}
-.tr-res td.r-d{color:#94A3B8!important;background:#F1F5F9!important}
+.tr-res td.r-p{color:#1A56DB!important;background:#E8F0FE!important}
+.tr-res td.r-fj{color:#C2570A!important;background:#FDEEE3!important}
+.tr-res td.r-fi{color:#C40000!important;background:#FDE8E8!important}
+.tr-res td.r-flg{color:#1F2937!important;background:#E5E7EB!important}
+.tr-res td.r-fer{color:#7A00CC!important;background:#F3E5FF!important}
+.tr-res td.r-d{color:#4A3600!important;background:#FBEFC7!important}
 .tr-res td.r-tx{background:var(--indigo)!important;color:#fff!important}
 
 /* ── Colunas de totais mensais por colaborador (fim da Grade Diária) ── */
@@ -1032,7 +1032,12 @@ function render(){
     });
   });
   const diasSet=new Set();blocos.forEach(b=>Object.keys(b.resumo).forEach(d=>diasSet.add(d)));
-  const diasOrdem=[...diasSet].sort();
+  const diasOrdem=[...diasSet].sort((a,b)=>{
+    const pa=a.split("/"),pb=b.split("/");
+    const da=new Date(2026,parseInt(pa[1],10)-1,parseInt(pa[0],10));
+    const db=new Date(2026,parseInt(pb[1],10)-1,parseInt(pb[0],10));
+    return da-db;
+  });
   const dRows=[];let totDP=0,totDFJ=0,totDFI=0,totDT=0;
   unidsM.forEach(u=>{
     diasOrdem.forEach(d=>{
@@ -1101,12 +1106,12 @@ function render(){
     });
   });
   const cR=(p,fj,fi)=>{const t=p+fj+fi;return t>0?Math.round(p/t*1000)/10:null;};
-  let r1=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px">Presenças</td>`;
-  let r2=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px">FJ</td>`;
-  let r3=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px">FI</td>`;
-  let r5=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px">Folga</td>`;
-  let r6=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px">Feriado</td>`;
-  let r7=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px">Desligado</td>`;
+  let r1=`<tr class="tr-res"><td colspan="4" class="r-p" style="text-align:right;padding-right:8px">Presenças</td>`;
+  let r2=`<tr class="tr-res"><td colspan="4" class="r-fj" style="text-align:right;padding-right:8px">FJ</td>`;
+  let r3=`<tr class="tr-res"><td colspan="4" class="r-fi" style="text-align:right;padding-right:8px">FI</td>`;
+  let r5=`<tr class="tr-res"><td colspan="4" class="r-flg" style="text-align:right;padding-right:8px">Folga</td>`;
+  let r6=`<tr class="tr-res"><td colspan="4" class="r-fer" style="text-align:right;padding-right:8px">Feriado</td>`;
+  let r7=`<tr class="tr-res"><td colspan="4" class="r-d" style="text-align:right;padding-right:8px">Desligado</td>`;
   let r4=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px;background:var(--indigo)!important;color:#fff!important">% Presença</td>`;
   diasOrdem.forEach((d,di)=>{
     const tx=cR(rp[di],rfj[di],rfi[di]);
