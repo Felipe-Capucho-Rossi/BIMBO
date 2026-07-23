@@ -295,7 +295,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .tgrade th:first-child{min-width:130px;left:0;text-align:left}
 .tgrade th:nth-child(2){left:130px;min-width:145px;text-align:center}
 .tgrade th:nth-child(3){left:275px;min-width:80px;text-align:center}
-.tgrade th:nth-child(4){left:355px;min-width:80px;text-align:center}
+.tgrade th:nth-child(4){left:355px;min-width:80px;text-align:center;box-shadow:2px 0 4px rgba(15,27,45,.18)}
 .tgrade td{padding:5px 7px;text-align:center;vertical-align:middle;border-bottom:1px solid var(--border-light);
   border-right:1px solid var(--border-light);white-space:nowrap}
 .tgrade td:first-child,.tgrade td:nth-child(2),.tgrade td:nth-child(3),.tgrade td:nth-child(4){
@@ -303,7 +303,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .tgrade td:first-child{left:0;min-width:130px;font-size:12px;color:var(--tx-primary);text-align:left}
 .tgrade td:nth-child(2){left:130px;min-width:145px;color:var(--indigo);font-size:12px;font-weight:700;text-align:center}
 .tgrade td:nth-child(3){left:275px;min-width:80px;color:var(--tx-muted);font-size:11px;text-align:center}
-.tgrade td:nth-child(4){left:355px;min-width:80px;color:var(--blue);font-size:11px;text-align:center}
+.tgrade td:nth-child(4){left:355px;min-width:80px;color:var(--blue);font-size:11px;text-align:center;box-shadow:2px 0 4px rgba(15,27,45,.12)}
 .tgrade tr:nth-child(even) td:first-child,.tgrade tr:nth-child(even) td:nth-child(2),
 .tgrade tr:nth-child(even) td:nth-child(3),.tgrade tr:nth-child(even) td:nth-child(4){background:#F8FAFC}
 .tgrade tr:nth-child(even){background:#F8FAFC}
@@ -409,15 +409,6 @@ img,svg{max-width:100%}
   .pres-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
   .sec-title{font-size:11px}
   .grade-nav{display:flex}
-  /* Congelar colunas (position:sticky + left) junto com overflow:auto tem bugs
-     conhecidos em navegadores mobile (Safari/Chrome/Samsung Internet), fazendo o
-     scroll horizontal por toque parar de responder. Em telas pequenas removemos o
-     "congelamento" das 4 primeiras colunas — a tabela passa a rolar inteira,
-     de forma 100% confiável, e o cabeçalho continua fixo no topo (position:sticky;top). */
-  .tgrade th:first-child,.tgrade th:nth-child(2),.tgrade th:nth-child(3),.tgrade th:nth-child(4),
-  .tgrade td:first-child,.tgrade td:nth-child(2),.tgrade td:nth-child(3),.tgrade td:nth-child(4){
-    position:static!important;min-width:0!important;
-  }
 }
 
 /* ── Celulares (≤640px): sidebar vira gaveta (drawer) off-canvas, some 100% quando fechada ── */
@@ -592,7 +583,7 @@ img,svg{max-width:100%}
       <div class="tbl-card">
         <div class="tbl-head">
           <h3>Grade de Marca&#231;&#245;es</h3>
-          <span>P = Presente · FJ = Falta Justificada · FI = Falta Injustificada · AT = Atestado · Use os filtros para navegar</span>
+          <span><b style="color:#4285F4">P</b> = Presente · <b style="color:#ED7D31">FJ</b> = Falta Justificada · <b style="color:#ED0000">FI</b> = Falta Injustificada · <b style="color:#ED0000">AT</b> = Atestado · <b style="color:#F1C232">D</b> = Desligado · <b style="color:#9900FF">FER</b> = Feriado · Use os filtros para navegar</span>
         </div>
         <div class="grade-nav">
           <button type="button" class="gnav-btn" onclick="scrollGrade(-1)" aria-label="Rolar para esquerda">‹</button>
@@ -1101,7 +1092,7 @@ function render(){
         else if(m==="D"){cls+="mc-d";rd[di]++;}
         else if(m==="INT")cls+="mc-int";
         else cls+="mc-dot";
-        const lbl=m==="P"?"✓":m==="FOLGA"?"FLG":m==="FER"?"FER":m;
+        const lbl=m==="P"?"P":m==="FOLGA"?"FLG":m==="FER"?"FER":m;
         gRows+=`<td class="${tdCls.trim()}"><span class="${cls}">${lbl}</span></td>`;
       });
       gTotP+=cP;gTotFJ+=cFJ;gTotFI+=cFI;gTotFLG+=cFLG;
