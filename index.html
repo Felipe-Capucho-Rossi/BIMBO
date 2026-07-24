@@ -291,19 +291,20 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
   font-size:10px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;vertical-align:middle;
   position:sticky;top:0;z-index:2}
 .tgrade th:first-child,.tgrade th:nth-child(2),.tgrade th:nth-child(3),.tgrade th:nth-child(4){
-  position:sticky;left:0;z-index:3}
-.tgrade th:first-child{min-width:130px;left:0;text-align:left}
-.tgrade th:nth-child(2){left:130px;min-width:145px;text-align:center}
-.tgrade th:nth-child(3){left:275px;min-width:80px;text-align:center}
-.tgrade th:nth-child(4){left:355px;min-width:80px;text-align:center;box-shadow:2px 0 4px rgba(15,27,45,.18)}
+  position:sticky;left:0;z-index:3;overflow:hidden;text-overflow:ellipsis}
+.tgrade th:first-child{min-width:130px;max-width:130px;left:0;text-align:left}
+.tgrade th:nth-child(2){left:130px;min-width:145px;max-width:145px;text-align:center}
+.tgrade th:nth-child(3){left:275px;min-width:80px;max-width:80px;text-align:center}
+.tgrade th:nth-child(4){left:355px;min-width:80px;max-width:80px;text-align:center;box-shadow:2px 0 4px rgba(15,27,45,.18)}
 .tgrade td{padding:5px 7px;text-align:center;vertical-align:middle;border-bottom:1px solid var(--border-light);
   border-right:1px solid var(--border-light);white-space:nowrap}
 .tgrade td:first-child,.tgrade td:nth-child(2),.tgrade td:nth-child(3),.tgrade td:nth-child(4){
-  position:sticky;background:#fff;font-weight:600}
-.tgrade td:first-child{left:0;min-width:130px;font-size:12px;color:var(--tx-primary);text-align:left}
-.tgrade td:nth-child(2){left:130px;min-width:145px;color:var(--indigo);font-size:12px;font-weight:700;text-align:center}
-.tgrade td:nth-child(3){left:275px;min-width:80px;color:var(--tx-muted);font-size:11px;text-align:center}
-.tgrade td:nth-child(4){left:355px;min-width:80px;color:var(--blue);font-size:11px;text-align:center;box-shadow:2px 0 4px rgba(15,27,45,.12)}
+  position:sticky;background:#fff;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.tgrade td:first-child{left:0;min-width:130px;max-width:130px;font-size:12px;color:var(--tx-primary);text-align:left}
+.tgrade td:nth-child(2){left:130px;min-width:145px;max-width:145px;color:var(--indigo);font-size:12px;font-weight:700;text-align:center}
+.tgrade td:nth-child(3){left:275px;min-width:80px;max-width:80px;color:var(--tx-muted);font-size:11px;text-align:center}
+.tgrade td:nth-child(4){left:355px;min-width:80px;max-width:80px;color:var(--blue);font-size:11px;text-align:center;box-shadow:2px 0 4px rgba(15,27,45,.12)}
+.tgrade tr.tr-res td[colspan]{max-width:none;overflow:visible;text-overflow:clip}
 .tgrade tr:nth-child(even) td:first-child,.tgrade tr:nth-child(even) td:nth-child(2),
 .tgrade tr:nth-child(even) td:nth-child(3),.tgrade tr:nth-child(even) td:nth-child(4){background:#F8FAFC}
 .tgrade tr:nth-child(even){background:#F8FAFC}
@@ -318,6 +319,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .mc-fer{background:#9900FF;color:#fff;font-size:9px}
 .mc-d{background:#F1C232;color:#4A3600;font-size:9px}
 .mc-int{background:#D1FAE5;color:#065F46;font-size:9px}
+.mc-ferias{background:#548235;color:#fff;font-size:9px}
 .mc-dot{color:#CBD5E1;font-size:10px}
 .tr-res td{font-size:10.5px;font-weight:700;background:#EEF2F7!important;
   border-top:2px solid var(--indigo)}
@@ -327,6 +329,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .tr-res td.r-flg{color:#1F2937!important;background:#E5E7EB!important}
 .tr-res td.r-fer{color:#7A00CC!important;background:#F3E5FF!important}
 .tr-res td.r-d{color:#4A3600!important;background:#FBEFC7!important}
+.tr-res td.r-ferias{color:#3C6228!important;background:#E6F0E0!important}
 .tr-res td.r-tx{background:var(--indigo)!important;color:#fff!important}
 
 /* ── Colunas de totais mensais por colaborador (fim da Grade Diária) ── */
@@ -591,12 +594,14 @@ img,svg{max-width:100%}
           <button type="button" class="gnav-btn" onclick="scrollGrade(1)" aria-label="Rolar para direita">›</button>
         </div>
         <div class="grade-legend">
-          <span class="gl-item"><span class="gl-box mc-p"></span>Presente</span>
-          <span class="gl-item"><span class="gl-box mc-fj"></span>FJ</span>
-          <span class="gl-item"><span class="gl-box mc-fi"></span>FI / AT</span>
-          <span class="gl-item"><span class="gl-box mc-flg"></span>Folga</span>
           <span class="gl-item"><span class="gl-box mc-fer"></span>Feriado</span>
+          <span class="gl-item"><span class="gl-box mc-ferias"></span>Férias</span>
+          <span class="gl-item"><span class="gl-box mc-flg"></span>Folga</span>
           <span class="gl-item"><span class="gl-box mc-d"></span>Desligado</span>
+          <span class="gl-item"><span class="gl-box mc-fi"></span>Falta Injustificada (FI)</span>
+          <span class="gl-item"><span class="gl-box mc-fj"></span>Falta Justificada (FJ)</span>
+          <span class="gl-item"><span class="gl-box mc-p"></span>Presença</span>
+          <span class="gl-item"><span class="gl-box" style="background:var(--indigo)"></span>% de Presença</span>
           <span class="gl-item"><span class="gl-box th-weekend-swatch"></span>Fim de semana</span>
         </div>
         <div class="tbl-scroll" id="grade-scroll"><div id="grade-inner"></div></div>
@@ -1074,15 +1079,15 @@ function render(){
     return{label:`${d}/26, ${WD_ABBR[wd]}`,weekend:wd===0||wd===6};
   };
   const diasInfo=diasOrdem.map(diaInfo);
-  let rp=[],rfj=[],rfi=[],rflg=[],rfer=[],rd=[];
-  diasOrdem.forEach(()=>{rp.push(0);rfj.push(0);rfi.push(0);rflg.push(0);rfer.push(0);rd.push(0);});
+  let rp=[],rfj=[],rfi=[],rflg=[],rfer=[],rd=[],rferias=[];
+  diasOrdem.forEach(()=>{rp.push(0);rfj.push(0);rfi.push(0);rflg.push(0);rfer.push(0);rd.push(0);rferias.push(0);});
   let gRows="";
   let gTotP=0,gTotFJ=0,gTotFI=0,gTotFLG=0;
   blocos.forEach(b=>{
     const colab=b.colaboradores.filter(cc=>!f.c||cc.cargo===f.c);
     colab.forEach(col=>{
       gRows+=`<tr><td title="${col.nome}">${col.nome.length>18?col.nome.substring(0,16)+"…":col.nome}</td>`;
-      gRows+=`<td>${b.unidade}</td><td>${col.cargo}</td><td>${col.turno}</td>`;
+      gRows+=`<td title="${b.unidade}">${b.unidade}</td><td title="${col.cargo}">${col.cargo}</td><td title="${col.turno}">${col.turno}</td>`;
       let cP=0,cFJ=0,cFI=0,cFLG=0;
       diasOrdem.forEach((d,di)=>{
         const tdCls=diasInfo[di].weekend?" td-weekend":"";
@@ -1094,10 +1099,11 @@ function render(){
         else if(m==="AT"){cls+="mc-at";rfi[di]++;cFI++;}
         else if(m==="FOLGA"){cls+="mc-flg";rflg[di]++;cFLG++;}
         else if(m==="FER"){cls+="mc-fer";rfer[di]++;}
+        else if(m==="FERIAS"){cls+="mc-ferias";rferias[di]++;}
         else if(m==="D"){cls+="mc-d";rd[di]++;}
         else if(m==="INT")cls+="mc-int";
         else cls+="mc-dot";
-        const lbl=m==="P"?"P":m==="FOLGA"?"FLG":m==="FER"?"FER":m;
+        const lbl=m==="P"?"P":m==="FOLGA"?"Folga":m==="FER"?"Feriado":m==="FERIAS"?"Férias":m;
         gRows+=`<td class="${tdCls.trim()}"><span class="${cls}">${lbl}</span></td>`;
       });
       gTotP+=cP;gTotFJ+=cFJ;gTotFI+=cFI;gTotFLG+=cFLG;
@@ -1106,32 +1112,35 @@ function render(){
     });
   });
   const cR=(p,fj,fi)=>{const t=p+fj+fi;return t>0?Math.round(p/t*1000)/10:null;};
-  let r1=`<tr class="tr-res"><td colspan="4" class="r-p" style="text-align:right;padding-right:8px">Presenças</td>`;
-  let r2=`<tr class="tr-res"><td colspan="4" class="r-fj" style="text-align:right;padding-right:8px">FJ</td>`;
-  let r3=`<tr class="tr-res"><td colspan="4" class="r-fi" style="text-align:right;padding-right:8px">FI</td>`;
-  let r5=`<tr class="tr-res"><td colspan="4" class="r-flg" style="text-align:right;padding-right:8px">Folga</td>`;
   let r6=`<tr class="tr-res"><td colspan="4" class="r-fer" style="text-align:right;padding-right:8px">Feriado</td>`;
+  let rFerias=`<tr class="tr-res"><td colspan="4" class="r-ferias" style="text-align:right;padding-right:8px">Férias</td>`;
+  let r5=`<tr class="tr-res"><td colspan="4" class="r-flg" style="text-align:right;padding-right:8px">Folga</td>`;
   let r7=`<tr class="tr-res"><td colspan="4" class="r-d" style="text-align:right;padding-right:8px">Desligado</td>`;
-  let r4=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px;background:var(--indigo)!important;color:#fff!important">% Presença</td>`;
+  let r3=`<tr class="tr-res"><td colspan="4" class="r-fi" style="text-align:right;padding-right:8px">Falta Injustificada (FI)</td>`;
+  let r2=`<tr class="tr-res"><td colspan="4" class="r-fj" style="text-align:right;padding-right:8px">Falta Justificada (FJ)</td>`;
+  let r1=`<tr class="tr-res"><td colspan="4" class="r-p" style="text-align:right;padding-right:8px">Presença</td>`;
+  let r4=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px;background:var(--indigo)!important;color:#fff!important">% de Presença</td>`;
   diasOrdem.forEach((d,di)=>{
     const tx=cR(rp[di],rfj[di],rfi[di]);
-    r1+=`<td class="r-p">${rp[di]}</td>`;
-    r2+=`<td class="r-fj">${rfj[di]||""}</td>`;
-    r3+=`<td class="r-fi">${rfi[di]||""}</td>`;
-    r5+=`<td class="r-flg">${rflg[di]||""}</td>`;
     r6+=`<td class="r-fer">${rfer[di]||""}</td>`;
+    rFerias+=`<td class="r-ferias">${rferias[di]||""}</td>`;
+    r5+=`<td class="r-flg">${rflg[di]||""}</td>`;
     r7+=`<td class="r-d">${rd[di]||""}</td>`;
+    r3+=`<td class="r-fi">${rfi[di]||""}</td>`;
+    r2+=`<td class="r-fj">${rfj[di]||""}</td>`;
+    r1+=`<td class="r-p">${rp[di]}</td>`;
     r4+=`<td class="r-tx">${tx!=null?tx+"%":""}</td>`;
   });
-  r1+=`<td class="gt-tot gt-res">${gTotP}</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
-  r2+=`<td class="gt-tot">—</td><td class="gt-tot gt-res">${gTotFJ}</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
-  r3+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot gt-res">${gTotFI}</td><td class="gt-tot">—</td></tr>`;
-  r5+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot gt-res">${gTotFLG}</td></tr>`;
   r6+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
+  rFerias+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
+  r5+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot gt-res">${gTotFLG}</td></tr>`;
   r7+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
+  r3+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot gt-res">${gTotFI}</td><td class="gt-tot">—</td></tr>`;
+  r2+=`<td class="gt-tot">—</td><td class="gt-tot gt-res">${gTotFJ}</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
+  r1+=`<td class="gt-tot gt-res">${gTotP}</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
   r4+=`<td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td></tr>`;
   const thDs=diasInfo.map(info=>`<th class="${info.weekend?"th-weekend":""}">${info.label}</th>`).join("");
-  gWrapper.innerHTML=`<table class="tgrade"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Cargo</th><th>Turno</th>${thDs}<th class="gt-tot">Total<br>Pres.</th><th class="gt-tot">Total<br>FJ</th><th class="gt-tot">Total<br>FI</th><th class="gt-tot">Total<br>Folgas</th></tr></thead><tbody>${r1}${r2}${r3}${r5}${r6}${r7}${r4}${gRows}</tbody></table>`;
+  gWrapper.innerHTML=`<table class="tgrade"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Cargo</th><th>Turno</th>${thDs}<th class="gt-tot">Total<br>Pres.</th><th class="gt-tot">Total<br>FJ</th><th class="gt-tot">Total<br>FI</th><th class="gt-tot">Total<br>Folgas</th></tr></thead><tbody>${r6}${rFerias}${r5}${r7}${r3}${r2}${r1}${r4}${gRows}</tbody></table>`;
 
   /* TABELA RESUMO */
   const grupos={};
