@@ -341,6 +341,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .tgrade tr:nth-child(even) td.gt-tot{background:#E4EAF3}
 .tgrade tr:hover td.gt-tot{background:#DCE7F7!important}
 .tgrade td.gt-tot.gt-res{color:#fff!important;background:var(--indigo)!important}
+/* Cabeçalhos dos totais mensais: preenchimento e fonte iguais à formatação
+   condicional da planilha de Controle de Presença Diária original */
+.tgrade th.gt-tot.gtc-p{background:#1A56DB!important;color:#fff!important}
+.tgrade th.gt-tot.gtc-fj{background:#ED7D31!important;color:#fff!important}
+.tgrade th.gt-tot.gtc-fi{background:#ED0000!important;color:#fff!important}
+.tgrade th.gt-tot.gtc-flg{background:#000!important;color:#fff!important}
 
 /* ── Formatação condicional: colunas de fim de semana (sáb/dom) ── */
 .tgrade th.th-weekend{background:#64748B}
@@ -1224,7 +1230,7 @@ function render(){
     return `<th class="${info.weekend?"th-weekend":""}${extraCls}">${info.label}</th>`;
   }).join("");
   gFrozenWrapper.innerHTML=`<table class="tgrade tgrade-frozen"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Cargo</th><th>Turno</th></tr></thead><tbody>${gRowsFrozen}</tbody></table>`;
-  gWrapper.innerHTML=`<table class="tgrade tgrade-scroll"><thead><tr>${thDs}<th class="gt-tot">Tot. Pres.</th><th class="gt-tot">Tot. FJ</th><th class="gt-tot">Tot. FI</th><th class="gt-tot">Tot. Folgas</th></tr></thead><tbody>${gRows}</tbody></table>`;
+  gWrapper.innerHTML=`<table class="tgrade tgrade-scroll"><thead><tr>${thDs}<th class="gt-tot gtc-p">Total de Presenças no Mês</th><th class="gt-tot gtc-fj">Total de Faltas Justificadas no Mês</th><th class="gt-tot gtc-fi">Total de Faltas Injustificadas no Mês</th><th class="gt-tot gtc-flg">Total de Folgas no Mês</th></tr></thead><tbody>${gRows}</tbody></table>`;
   gFrozenWrapper.scrollTop=0;
 
   /* TABELA RESUMO */
