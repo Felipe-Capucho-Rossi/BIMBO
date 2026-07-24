@@ -341,12 +341,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .tgrade tr:nth-child(even) td.gt-tot{background:#E4EAF3}
 .tgrade tr:hover td.gt-tot{background:#DCE7F7!important}
 .tgrade td.gt-tot.gt-res{color:#fff!important;background:var(--indigo)!important}
-/* Cabeçalhos dos totais mensais: preenchimento e fonte iguais à formatação
-   condicional da planilha de Controle de Presença Diária original */
-.tgrade th.gt-tot.gtc-p{background:#1A56DB!important;color:#fff!important}
-.tgrade th.gt-tot.gtc-fj{background:#ED7D31!important;color:#fff!important}
-.tgrade th.gt-tot.gtc-fi{background:#ED0000!important;color:#fff!important}
-.tgrade th.gt-tot.gtc-flg{background:#000!important;color:#fff!important}
+/* Cabeçalhos e células de soma dos totais mensais: mesma formatação de
+   preenchimento e fonte (congruência entre dado e cor), aplicada tanto ao
+   cabeçalho (th, inclusive na barra divisória de cada turno) quanto às
+   células que trazem os valores somados (td, por colaborador e por grupo),
+   inclusive sob hover/zebra — igual à formatação condicional da planilha
+   de Controle de Presença Diária original */
+.tgrade tr td.gt-tot.gtc-p,.tgrade tr th.gt-tot.gtc-p{background:#1A56DB!important;color:#fff!important}
+.tgrade tr td.gt-tot.gtc-fj,.tgrade tr th.gt-tot.gtc-fj{background:#ED7D31!important;color:#fff!important}
+.tgrade tr td.gt-tot.gtc-fi,.tgrade tr th.gt-tot.gtc-fi{background:#ED0000!important;color:#fff!important}
+.tgrade tr td.gt-tot.gtc-flg,.tgrade tr th.gt-tot.gtc-flg{background:#000!important;color:#fff!important}
+.tgrade tr.tgroup-header td.gt-tot{text-align:center}
 
 /* ── Formatação condicional: colunas de fim de semana (sáb/dom) ── */
 .tgrade th.th-weekend{background:#64748B}
@@ -1157,11 +1162,11 @@ function render(){
     });
     r6+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
     rFerias+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
-    r5+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot gt-res">${tot.flg}</td></tr>`;
+    r5+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot${tot.flg>0?" gtc-flg":""}">${tot.flg}</td></tr>`;
     r7+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
-    r3+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot gt-res">${tot.fi}</td><td class="gt-tot">—</td></tr>`;
-    r2+=`<td class="gt-tot">—</td><td class="gt-tot gt-res">${tot.fj}</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
-    r1+=`<td class="gt-tot gt-res">${tot.p}</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
+    r3+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot${tot.fi>0?" gtc-fi":""}">${tot.fi}</td><td class="gt-tot">—</td></tr>`;
+    r2+=`<td class="gt-tot">—</td><td class="gt-tot${tot.fj>0?" gtc-fj":""}">${tot.fj}</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
+    r1+=`<td class="gt-tot${tot.p>0?" gtc-p":""}">${tot.p}</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
     r4+=`<td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td></tr>`;
     return r6+rFerias+r5+r7+r3+r2+r1+r4;
   }
@@ -1172,7 +1177,7 @@ function render(){
     if(!colab.length)return;
     const groupLabel=`${b.unidade} — ${b.turno}`;
     gRowsFrozen+=`<tr class="tgroup-header"><td colspan="4">${groupLabel}</td></tr>`;
-    gRows+=`<tr class="tgroup-header"><td colspan="${totalScrollCols}"></td></tr>`;
+    gRows+=`<tr class="tgroup-header"><td colspan="${diasOrdem.length}"></td><td class="gt-tot gtc-p">Total de Presenças no Mês</td><td class="gt-tot gtc-fj">Total de Faltas Justificadas no Mês</td><td class="gt-tot gtc-fi">Total de Faltas Injustificadas no Mês</td><td class="gt-tot gtc-flg">Total de Folgas no Mês</td></tr>`;
 
     const arr={p:[],fj:[],fi:[],flg:[],fer:[],d:[],ferias:[]};
     diasOrdem.forEach(()=>{arr.p.push(0);arr.fj.push(0);arr.fi.push(0);arr.flg.push(0);arr.fer.push(0);arr.d.push(0);arr.ferias.push(0);});
@@ -1201,7 +1206,7 @@ function render(){
         empScroll+=`<td class="${tdCls.trim()}"><span class="${cls}">${lbl}</span></td>`;
       });
       bTotP+=cP;bTotFJ+=cFJ;bTotFI+=cFI;bTotFLG+=cFLG;
-      empScroll+=`<td class="gt-tot">${cP}</td><td class="gt-tot">${cFJ||"—"}</td><td class="gt-tot">${cFI||"—"}</td><td class="gt-tot">${cFLG||"—"}</td>`;
+      empScroll+=`<td class="gt-tot${cP>0?" gtc-p":""}">${cP}</td><td class="gt-tot${cFJ>0?" gtc-fj":""}">${cFJ||"—"}</td><td class="gt-tot${cFI>0?" gtc-fi":""}">${cFI||"—"}</td><td class="gt-tot${cFLG>0?" gtc-flg":""}">${cFLG||"—"}</td>`;
       empScroll+="</tr>";
     });
 
