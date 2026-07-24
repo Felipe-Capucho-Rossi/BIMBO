@@ -274,10 +274,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
   display:flex;align-items:center;justify-content:space-between;gap:12px}
 .tbl-head h3{font-size:13px;font-weight:700;color:var(--tx-primary)}
 .tbl-head span{font-size:11px;color:var(--tx-muted)}
+.tbl-head span b{font-weight:800;letter-spacing:.4px}
 .grade-legend{display:flex;gap:10px;flex-wrap:wrap;padding:9px 16px;
   background:#F8FAFC;border-bottom:1px solid var(--border-light)}
 .gl-item{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--tx-secondary)}
-.gl-item b{font-size:11.5px}
+.gl-item b{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;font-weight:800}
 .gl-box{width:20px;height:15px;border-radius:3px}
 .tbl-scroll{overflow:auto;max-height:460px;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;overscroll-behavior-x:contain}
 .grade-nav{display:none;align-items:center;gap:10px;padding:8px 16px;background:#F8FAFC;
@@ -294,7 +295,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .grade-frozen::-webkit-scrollbar{display:none}
 .tgrade{border-collapse:collapse;min-width:100%;font-size:11.5px}
 .tgrade th{background:var(--indigo);color:#fff;padding:7px 8px;text-align:center;font-weight:700;
-  font-size:10px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;vertical-align:middle;
+  font-size:10px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;vertical-align:middle;
   line-height:14px;height:14px;box-sizing:content-box;position:sticky;top:0;z-index:2}
 .tgrade td{padding:5px 7px;text-align:center;vertical-align:middle;border-bottom:1px solid var(--border-light);
   border-right:1px solid var(--border-light);white-space:nowrap;font-size:11.5px;line-height:15px;height:15px;box-sizing:content-box}
@@ -310,7 +311,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .tgrade tr:nth-child(even){background:#F8FAFC}
 .tgrade tr:hover td{background:#EEF5FF!important}
 .tgrade tr.tgroup-header td{background:var(--indigo)!important;color:#fff!important;font-weight:800;
-  text-align:left;padding:6px 8px;font-size:11px;letter-spacing:.3px}
+  text-align:left;padding:6px 8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px}
 .mc{display:inline-block;height:15px;line-height:15px;overflow:hidden;vertical-align:top;
   font-size:10px;font-weight:800}
 /* Cores conforme formatação condicional da planilha "Controle de Presença Diária" — fonte colorida, preenchimento branco (igual à planilha original) */
@@ -324,7 +325,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .mc-ferias{color:#548235;font-size:9px}
 .mc-dot{display:inline-block;height:15px;line-height:15px;overflow:hidden;vertical-align:top;color:#CBD5E1;font-size:10px}
 .tr-res td{font-size:10.5px;font-weight:800;background:#fff!important;
-  border-top:2px solid var(--indigo)}
+  border-top:2px solid var(--indigo);text-transform:uppercase;letter-spacing:.4px}
 .tr-res td.r-p{color:#1A56DB!important}
 .tr-res td.r-fj{color:#ED7D31!important}
 .tr-res td.r-fi{color:#ED0000!important}
