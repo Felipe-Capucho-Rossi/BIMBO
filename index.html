@@ -1232,6 +1232,16 @@ function render(){
   gFrozenWrapper.innerHTML=`<table class="tgrade tgrade-frozen"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Cargo</th><th>Turno</th></tr></thead><tbody>${gRowsFrozen}</tbody></table>`;
   gWrapper.innerHTML=`<table class="tgrade tgrade-scroll"><thead><tr>${thDs}<th class="gt-tot gtc-p">Total de Presenças no Mês</th><th class="gt-tot gtc-fj">Total de Faltas Justificadas no Mês</th><th class="gt-tot gtc-fi">Total de Faltas Injustificadas no Mês</th><th class="gt-tot gtc-flg">Total de Folgas no Mês</th></tr></thead><tbody>${gRows}</tbody></table>`;
   gFrozenWrapper.scrollTop=0;
+  /* Iguala a altura útil (viewport) do painel congelado à do painel rolável.
+     O painel rolável pode ter uma barra de rolagem horizontal (muitas colunas
+     de dia) que consome altura; o painel congelado nunca tem rolagem
+     horizontal. Sem essa igualdade, o scrollTop máximo dos dois painéis
+     diverge e, ao arrastar a barra até o fim, as linhas ficam desalinhadas. */
+  (function(){
+    const gs=document.getElementById("grade-scroll");
+    const gf=document.getElementById("grade-frozen");
+    if(gs&&gf){gf.style.maxHeight=gs.clientHeight+"px";}
+  })();
 
   /* TABELA RESUMO */
   const grupos={};
@@ -1261,19 +1271,21 @@ function render(){
 document.getElementById("nav-kpi").classList.add("active");
 render();
 
-// Sincronismo vertical do painel congelado (Grade Diária) com o painel rolável
+// Sincronismo vertical do painel congelado (Grade Diária) com o painel rolável.
+// Em vez de um flag booleano "syncing" (que pode descartar eventos legítimos
+// disparados em sequência rápida durante um arraste contínuo da barra de
+// rolagem, causando desalinhamento de linhas), cada handler só escreve no
+// outro painel quando os valores realmente divergem — isso é idempotente e
+// não perde atualizações mesmo sob disparo intenso de eventos "scroll".
 (function(){
   const frozen=document.getElementById("grade-frozen");
   const scroll=document.getElementById("grade-scroll");
   if(!frozen||!scroll)return;
-  let syncing=false;
   frozen.addEventListener("scroll",()=>{
-    if(syncing){syncing=false;return;}
-    syncing=true;scroll.scrollTop=frozen.scrollTop;
+    if(scroll.scrollTop!==frozen.scrollTop)scroll.scrollTop=frozen.scrollTop;
   });
   scroll.addEventListener("scroll",()=>{
-    if(syncing){syncing=false;return;}
-    syncing=true;frozen.scrollTop=scroll.scrollTop;
+    if(frozen.scrollTop!==scroll.scrollTop)frozen.scrollTop=scroll.scrollTop;
   });
 })();
 
