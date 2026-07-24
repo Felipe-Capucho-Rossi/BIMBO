@@ -286,53 +286,50 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
   display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
 .gnav-btn:active{background:var(--blue-light);border-color:var(--blue);transform:scale(.94)}
 .gnav-hint{font-size:11px;color:var(--tx-muted);flex:1}
+.grade-freeze-wrap{display:flex;position:relative}
+.grade-frozen{flex:0 0 auto;overflow-y:auto;overflow-x:hidden;max-height:460px;
+  box-shadow:2px 0 6px rgba(15,27,45,.15);background:#fff;position:relative;z-index:4;
+  scrollbar-width:none;-ms-overflow-style:none}
+.grade-frozen::-webkit-scrollbar{display:none}
 .tgrade{border-collapse:collapse;min-width:100%;font-size:11.5px}
 .tgrade th{background:var(--indigo);color:#fff;padding:7px 8px;text-align:center;font-weight:700;
   font-size:10px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;vertical-align:middle;
   position:sticky;top:0;z-index:2}
-.tgrade th:first-child,.tgrade th:nth-child(2),.tgrade th:nth-child(3),.tgrade th:nth-child(4){
-  position:sticky;left:0;z-index:3;overflow:hidden;text-overflow:ellipsis;
-  -webkit-transform:translateZ(0);transform:translateZ(0);will-change:transform}
-.tgrade th:first-child{min-width:130px;max-width:130px;left:0;text-align:left}
-.tgrade th:nth-child(2){left:130px;min-width:145px;max-width:145px;text-align:center}
-.tgrade th:nth-child(3){left:275px;min-width:80px;max-width:80px;text-align:center}
-.tgrade th:nth-child(4){left:355px;min-width:80px;max-width:80px;text-align:center;box-shadow:2px 0 4px rgba(15,27,45,.18)}
 .tgrade td{padding:5px 7px;text-align:center;vertical-align:middle;border-bottom:1px solid var(--border-light);
   border-right:1px solid var(--border-light);white-space:nowrap}
-.tgrade td:first-child,.tgrade td:nth-child(2),.tgrade td:nth-child(3),.tgrade td:nth-child(4){
-  position:sticky;background:#fff;font-weight:600;overflow:hidden;text-overflow:ellipsis;
-  -webkit-transform:translateZ(0);transform:translateZ(0);will-change:transform}
-.tgrade td:first-child{left:0;min-width:130px;max-width:130px;font-size:12px;color:var(--tx-primary);text-align:left}
-.tgrade td:nth-child(2){left:130px;min-width:145px;max-width:145px;color:var(--indigo);font-size:12px;font-weight:700;text-align:center}
-.tgrade td:nth-child(3){left:275px;min-width:80px;max-width:80px;color:var(--tx-muted);font-size:11px;text-align:center}
-.tgrade td:nth-child(4){left:355px;min-width:80px;max-width:80px;color:var(--blue);font-size:11px;text-align:center;box-shadow:2px 0 4px rgba(15,27,45,.12)}
-.tgrade tr.tr-res td[colspan]{max-width:none;overflow:visible;text-overflow:clip}
-.tgrade tr:nth-child(even) td:first-child,.tgrade tr:nth-child(even) td:nth-child(2),
-.tgrade tr:nth-child(even) td:nth-child(3),.tgrade tr:nth-child(even) td:nth-child(4){background:#F8FAFC}
+.tgrade-frozen th:first-child{min-width:130px;max-width:170px;text-align:left}
+.tgrade-frozen th:nth-child(2){min-width:120px;max-width:170px;text-align:center}
+.tgrade-frozen th:nth-child(3){min-width:70px;max-width:110px;text-align:center}
+.tgrade-frozen th:nth-child(4){min-width:60px;max-width:90px;text-align:center}
+.tgrade-frozen td{overflow:hidden;text-overflow:ellipsis;background:#fff;font-weight:600}
+.tgrade-frozen td:first-child{min-width:130px;max-width:170px;font-size:12px;color:var(--tx-primary);text-align:left}
+.tgrade-frozen td:nth-child(2){min-width:120px;max-width:170px;color:var(--indigo);font-size:12px;font-weight:700;text-align:center}
+.tgrade-frozen td:nth-child(3){min-width:70px;max-width:110px;color:var(--tx-muted);font-size:11px;text-align:center}
+.tgrade-frozen td:nth-child(4){min-width:60px;max-width:90px;color:var(--blue);font-size:11px;text-align:center}
 .tgrade tr:nth-child(even){background:#F8FAFC}
 .tgrade tr:hover td{background:#EEF5FF!important}
-.mc{display:block;border-radius:3px;padding:1px 2px;text-align:center;
-  font-size:10px;font-weight:700;min-width:22px}
-/* Cores conforme formatação condicional da planilha "Controle de Presença Diária" */
-.mc-p{background:#4285F4;color:#fff}
-.mc-fj{background:#ED7D31;color:#fff}
-.mc-fi,.mc-at{background:#ED0000;color:#fff}
-.mc-flg{background:#E5E7EB;color:#1F2937;font-size:9px}
-.mc-fer{background:#9900FF;color:#fff;font-size:9px}
-.mc-d{background:#F1C232;color:#4A3600;font-size:9px}
-.mc-int{background:#D1FAE5;color:#065F46;font-size:9px}
-.mc-ferias{background:#548235;color:#fff;font-size:9px}
+.mc{display:inline-block;padding:1px 2px;text-align:center;
+  font-size:10px;font-weight:800;min-width:22px}
+/* Cores conforme formatação condicional da planilha "Controle de Presença Diária" — fonte colorida, preenchimento branco (igual à planilha original) */
+.mc-p{color:#4285F4}
+.mc-fj{color:#ED7D31}
+.mc-fi,.mc-at{color:#ED0000}
+.mc-flg{color:#000;font-size:9px}
+.mc-fer{color:#9900FF;font-size:9px}
+.mc-d{color:#F1C232;font-size:9px}
+.mc-int{color:#065F46;font-size:9px}
+.mc-ferias{color:#548235;font-size:9px}
 .mc-dot{color:#CBD5E1;font-size:10px}
-.tr-res td{font-size:10.5px;font-weight:700;background:#EEF2F7!important;
+.tr-res td{font-size:10.5px;font-weight:800;background:#fff!important;
   border-top:2px solid var(--indigo)}
-.tr-res td.r-p{color:#1A56DB!important;background:#E8F0FE!important}
-.tr-res td.r-fj{color:#C2570A!important;background:#FDEEE3!important}
-.tr-res td.r-fi{color:#C40000!important;background:#FDE8E8!important}
-.tr-res td.r-flg{color:#1F2937!important;background:#E5E7EB!important}
-.tr-res td.r-fer{color:#7A00CC!important;background:#F3E5FF!important}
-.tr-res td.r-d{color:#4A3600!important;background:#FBEFC7!important}
-.tr-res td.r-ferias{color:#3C6228!important;background:#E6F0E0!important}
-.tr-res td.r-tx{background:var(--indigo)!important;color:#fff!important}
+.tr-res td.r-p{color:#1A56DB!important}
+.tr-res td.r-fj{color:#ED7D31!important}
+.tr-res td.r-fi{color:#ED0000!important}
+.tr-res td.r-flg{color:#000!important}
+.tr-res td.r-fer{color:#9900FF!important}
+.tr-res td.r-d{color:#F1C232!important}
+.tr-res td.r-ferias{color:#548235!important}
+.tr-res td.r-tx{color:var(--indigo)!important;font-weight:800}
 
 /* ── Colunas de totais mensais por colaborador (fim da Grade Diária) ── */
 .tgrade th.gt-tot,.tgrade td.gt-tot{background:#EEF2F7;font-weight:800;
@@ -592,21 +589,24 @@ img,svg{max-width:100%}
         </div>
         <div class="grade-nav">
           <button type="button" class="gnav-btn" onclick="scrollGrade(-1)" aria-label="Rolar para esquerda">‹</button>
-          <span class="gnav-hint">Arraste a tabela ou use as setas para ver os dias do mês →</span>
+          <span class="gnav-hint">Arraste a tabela ou use as setas para ver os dias do m&#234;s →</span>
           <button type="button" class="gnav-btn" onclick="scrollGrade(1)" aria-label="Rolar para direita">›</button>
         </div>
         <div class="grade-legend">
-          <span class="gl-item"><span class="gl-box mc-fer"></span>Feriado</span>
-          <span class="gl-item"><span class="gl-box mc-ferias"></span>Férias</span>
-          <span class="gl-item"><span class="gl-box mc-flg"></span>Folga</span>
-          <span class="gl-item"><span class="gl-box mc-d"></span>Desligado</span>
-          <span class="gl-item"><span class="gl-box mc-fi"></span>Falta Injustificada (FI)</span>
-          <span class="gl-item"><span class="gl-box mc-fj"></span>Falta Justificada (FJ)</span>
-          <span class="gl-item"><span class="gl-box mc-p"></span>Presença</span>
-          <span class="gl-item"><span class="gl-box" style="background:var(--indigo)"></span>% de Presença</span>
+          <span class="gl-item"><b class="mc-fer">Feriado</b></span>
+          <span class="gl-item"><b class="mc-ferias">Férias</b></span>
+          <span class="gl-item"><b class="mc-flg">Folga</b></span>
+          <span class="gl-item"><b class="mc-d">Desligado</b></span>
+          <span class="gl-item"><b class="mc-fi">Falta Injustificada (FI)</b></span>
+          <span class="gl-item"><b class="mc-fj">Falta Justificada (FJ)</b></span>
+          <span class="gl-item"><b class="mc-p">Presença</b></span>
+          <span class="gl-item"><b style="color:var(--indigo)">% de Presença</b></span>
           <span class="gl-item"><span class="gl-box th-weekend-swatch"></span>Fim de semana</span>
         </div>
-        <div class="tbl-scroll" id="grade-scroll"><div id="grade-inner"></div></div>
+        <div class="grade-freeze-wrap">
+          <div class="grade-frozen" id="grade-frozen"><div id="grade-frozen-inner"></div></div>
+          <div class="tbl-scroll" id="grade-scroll"><div id="grade-inner"></div></div>
+        </div>
       </div>
     </div>
     <!-- ════════════════════════════════════════ -->
@@ -1073,7 +1073,8 @@ function render(){
 
   /* GRADE */
   const gWrapper=document.getElementById("grade-inner");
-  if(!blocos.length){gWrapper.innerHTML='<p style="padding:20px;color:#8FA8C4">Selecione filtros para ver a grade.</p>';return;}
+  const gFrozenWrapper=document.getElementById("grade-frozen-inner");
+  if(!blocos.length){gWrapper.innerHTML='<p style="padding:20px;color:#8FA8C4">Selecione filtros para ver a grade.</p>';gFrozenWrapper.innerHTML="";return;}
   const WD_ABBR=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
   const diaInfo=d=>{
     const p=d.split("/");const dd=parseInt(p[0],10),mm=parseInt(p[1],10);
@@ -1083,13 +1084,14 @@ function render(){
   const diasInfo=diasOrdem.map(diaInfo);
   let rp=[],rfj=[],rfi=[],rflg=[],rfer=[],rd=[],rferias=[];
   diasOrdem.forEach(()=>{rp.push(0);rfj.push(0);rfi.push(0);rflg.push(0);rfer.push(0);rd.push(0);rferias.push(0);});
-  let gRows="";
+  let gRows="",gRowsFrozen="";
   let gTotP=0,gTotFJ=0,gTotFI=0,gTotFLG=0;
   blocos.forEach(b=>{
     const colab=b.colaboradores.filter(cc=>!f.c||cc.cargo===f.c);
     colab.forEach(col=>{
-      gRows+=`<tr><td title="${col.nome}">${col.nome.length>18?col.nome.substring(0,16)+"…":col.nome}</td>`;
-      gRows+=`<td title="${b.unidade}">${b.unidade}</td><td title="${col.cargo}">${col.cargo}</td><td title="${col.turno}">${col.turno}</td>`;
+      gRowsFrozen+=`<tr><td title="${col.nome}">${col.nome.length>18?col.nome.substring(0,16)+"…":col.nome}</td>`;
+      gRowsFrozen+=`<td title="${b.unidade}">${b.unidade}</td><td title="${col.cargo}">${col.cargo}</td><td title="${col.turno}">${col.turno}</td></tr>`;
+      gRows+="<tr>";
       let cP=0,cFJ=0,cFI=0,cFLG=0;
       diasOrdem.forEach((d,di)=>{
         const tdCls=diasInfo[di].weekend?" td-weekend":"";
@@ -1114,14 +1116,16 @@ function render(){
     });
   });
   const cR=(p,fj,fi)=>{const t=p+fj+fi;return t>0?Math.round(p/t*1000)/10:null;};
-  let r6=`<tr class="tr-res"><td colspan="4" class="r-fer" style="text-align:right;padding-right:8px">Feriado</td>`;
-  let rFerias=`<tr class="tr-res"><td colspan="4" class="r-ferias" style="text-align:right;padding-right:8px">Férias</td>`;
-  let r5=`<tr class="tr-res"><td colspan="4" class="r-flg" style="text-align:right;padding-right:8px">Folga</td>`;
-  let r7=`<tr class="tr-res"><td colspan="4" class="r-d" style="text-align:right;padding-right:8px">Desligado</td>`;
-  let r3=`<tr class="tr-res"><td colspan="4" class="r-fi" style="text-align:right;padding-right:8px">Falta Injustificada (FI)</td>`;
-  let r2=`<tr class="tr-res"><td colspan="4" class="r-fj" style="text-align:right;padding-right:8px">Falta Justificada (FJ)</td>`;
-  let r1=`<tr class="tr-res"><td colspan="4" class="r-p" style="text-align:right;padding-right:8px">Presença</td>`;
-  let r4=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px;background:var(--indigo)!important;color:#fff!important">% de Presença</td>`;
+  const r6f=`<tr class="tr-res"><td colspan="4" class="r-fer" style="text-align:right;padding-right:8px">Feriado</td></tr>`;
+  const rFeriasF=`<tr class="tr-res"><td colspan="4" class="r-ferias" style="text-align:right;padding-right:8px">Férias</td></tr>`;
+  const r5f=`<tr class="tr-res"><td colspan="4" class="r-flg" style="text-align:right;padding-right:8px">Folga</td></tr>`;
+  const r7f=`<tr class="tr-res"><td colspan="4" class="r-d" style="text-align:right;padding-right:8px">Desligado</td></tr>`;
+  const r3f=`<tr class="tr-res"><td colspan="4" class="r-fi" style="text-align:right;padding-right:8px">Falta Injustificada (FI)</td></tr>`;
+  const r2f=`<tr class="tr-res"><td colspan="4" class="r-fj" style="text-align:right;padding-right:8px">Falta Justificada (FJ)</td></tr>`;
+  const r1f=`<tr class="tr-res"><td colspan="4" class="r-p" style="text-align:right;padding-right:8px">Presença</td></tr>`;
+  const r4f=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px;background:#fff!important;color:var(--indigo)!important">% de Presença</td></tr>`;
+  let r6="<tr class=\"tr-res\">",rFerias="<tr class=\"tr-res\">",r5="<tr class=\"tr-res\">",r7="<tr class=\"tr-res\">",
+      r3="<tr class=\"tr-res\">",r2="<tr class=\"tr-res\">",r1="<tr class=\"tr-res\">",r4="<tr class=\"tr-res\">";
   diasOrdem.forEach((d,di)=>{
     const tx=cR(rp[di],rfj[di],rfi[di]);
     r6+=`<td class="r-fer">${rfer[di]||""}</td>`;
@@ -1142,7 +1146,9 @@ function render(){
   r1+=`<td class="gt-tot gt-res">${gTotP}</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
   r4+=`<td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td></tr>`;
   const thDs=diasInfo.map(info=>`<th class="${info.weekend?"th-weekend":""}">${info.label}</th>`).join("");
-  gWrapper.innerHTML=`<table class="tgrade"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Cargo</th><th>Turno</th>${thDs}<th class="gt-tot">Total<br>Pres.</th><th class="gt-tot">Total<br>FJ</th><th class="gt-tot">Total<br>FI</th><th class="gt-tot">Total<br>Folgas</th></tr></thead><tbody>${r6}${rFerias}${r5}${r7}${r3}${r2}${r1}${r4}${gRows}</tbody></table>`;
+  gFrozenWrapper.innerHTML=`<table class="tgrade tgrade-frozen"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Cargo</th><th>Turno</th></tr></thead><tbody>${r6f}${rFeriasF}${r5f}${r7f}${r3f}${r2f}${r1f}${r4f}${gRowsFrozen}</tbody></table>`;
+  gWrapper.innerHTML=`<table class="tgrade tgrade-scroll"><thead><tr>${thDs}<th class="gt-tot">Total<br>Pres.</th><th class="gt-tot">Total<br>FJ</th><th class="gt-tot">Total<br>FI</th><th class="gt-tot">Total<br>Folgas</th></tr></thead><tbody>${r6}${rFerias}${r5}${r7}${r3}${r2}${r1}${r4}${gRows}</tbody></table>`;
+  gFrozenWrapper.scrollTop=0;
 
   /* TABELA RESUMO */
   const grupos={};
@@ -1171,6 +1177,22 @@ function render(){
 // Iniciar com KPI ativo
 document.getElementById("nav-kpi").classList.add("active");
 render();
+
+// Sincronismo vertical do painel congelado (Grade Diária) com o painel rolável
+(function(){
+  const frozen=document.getElementById("grade-frozen");
+  const scroll=document.getElementById("grade-scroll");
+  if(!frozen||!scroll)return;
+  let syncing=false;
+  frozen.addEventListener("scroll",()=>{
+    if(syncing){syncing=false;return;}
+    syncing=true;scroll.scrollTop=frozen.scrollTop;
+  });
+  scroll.addEventListener("scroll",()=>{
+    if(syncing){syncing=false;return;}
+    syncing=true;frozen.scrollTop=scroll.scrollTop;
+  });
+})();
 
 /* ═══════════════════════════════════════════════════════════════════
    MÓDULO: DIMENSIONAMENTO BIMBO vs PRESENÇA REAL
