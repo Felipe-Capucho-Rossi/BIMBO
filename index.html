@@ -503,13 +503,13 @@ img,svg{max-width:100%}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
       <span class="sb-item-txt">Grade Diária</span>
     </div>
-    <div class="sb-item" id="nav-graficos" onclick="navTo('sec-graficos',2)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      <span class="sb-item-txt">Gráficos</span>
-    </div>
-    <div class="sb-item" id="nav-dimensionamento" onclick="navTo('sec-dimensionamento',3)">
+    <div class="sb-item" id="nav-dimensionamento" onclick="navTo('sec-dimensionamento',2)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h12M3 18h8"/><rect x="15" y="10" width="6" height="10" rx="1" fill="currentColor" opacity=".3"/><rect x="19" y="6" width="2" height="14" rx="1" fill="currentColor" opacity=".5"/></svg>
       <span class="sb-item-txt">Dimensionamento</span>
+    </div>
+    <div class="sb-item" id="nav-graficos" onclick="navTo('sec-graficos',3)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span class="sb-item-txt">Gráficos</span>
     </div>
         <div class="sb-item" id="nav-evolucao" onclick="navTo('sec-evolucao',4)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
@@ -548,14 +548,14 @@ img,svg{max-width:100%}
 
   <div class="filter-bar">
     <div class="fg"><label>Unidade</label>
-      <select id="f-uni" onchange="render()"><option value="">Todas</option>
+      <select id="f-uni" onchange="render();syncFromMainFilter()"><option value="">Todas</option>
         <option>ANHANGUERA PRIMÁRIA</option><option>ANHANGUERA SECUNDÁRIA</option>
         <option>BANDEIRANTES</option><option>GRU</option><option>MOGI</option>
         <option>RAPOSO</option><option>SANTO ANDR&#201;</option>
         <option>SBC</option><option>SOROCABA</option><option>VALINHOS</option>
       </select></div>
     <div class="fg"><label>M&#234;s</label>
-      <select id="f-mes" onchange="render()"><option value="">Todos</option>
+      <select id="f-mes" onchange="render();syncFromMainFilter()"><option value="">Todos</option>
         <option>Mar&#231;o</option><option>Abril</option><option>Maio</option><option>Junho</option><option>Julho</option>
       </select></div>
     <div class="fg"><label>Turno</label>
@@ -563,7 +563,7 @@ img,svg{max-width:100%}
         <option>1&#186; Turno</option><option>2&#186; Turno</option><option>3&#186; Turno</option><option>ADM</option>
       </select></div>
     <div class="fg"><label>Cargo</label>
-      <select id="f-cargo" onchange="render()"><option value="">Todos</option>
+      <select id="f-cargo" onchange="render();syncFromMainFilter()"><option value="">Todos</option>
         <option>Aux. de Expedi&#231;&#227;o</option><option>L&#237;der Operacional</option>
         <option>Op. Empilhadeira</option><option>Manobrista</option>
         <option>Aux. Administrativo</option><option>Aux. Operacional</option>
@@ -844,7 +844,7 @@ function scrollGrade(dir){
   el.scrollLeft=target;
 }
 
-const NAV_IDS=["nav-kpi","nav-grade","nav-graficos","nav-dimensionamento","nav-evolucao","nav-presenca","nav-resumo"];
+const NAV_IDS=["nav-kpi","nav-grade","nav-dimensionamento","nav-graficos","nav-evolucao","nav-presenca","nav-resumo"];
 function navTo(sectionId, navIdx){
   closeMobileNav();
   // Activar item sidebar
@@ -923,7 +923,33 @@ function filtrar(f){
     return true;
   });
 }
-function clearF(){["f-uni","f-mes","f-turno","f-cargo"].forEach(id=>document.getElementById(id).value="");render();}
+function clearF(){["f-uni","f-mes","f-turno","f-cargo"].forEach(id=>document.getElementById(id).value="");render();syncFromMainFilter();}
+
+/* ── Consolidação de filtros: o filtro principal (barra superior) propaga
+   para os filtros de Unidade/Mês/Cargo das seções Dimensionamento e Presença
+   Diária, respeitando as nomenclaturas próprias de cada base de dados. ── */
+const UNI_MAIN_TO_DIM={"GRU":"GUARULHOS","SBC":"SÃO BERNARDO DO CAMPO","MOGI":"MOGI PRIMÁRIA","RAPOSO":null};
+const UNI_MAIN_TO_PF={"GRU":"GUARULHOS"};
+const CRG_MAIN_TO_DIM={"Aux. de Expedição":"AUXILIAR DE EXPEDIÇÃO","Aux. Administrativo":"AUXILIAR ADMINISTRATIVO",
+  "Op. Empilhadeira":"OPERADOR DE EMPILHADEIRA","Manobrista":"MANOBRA",
+  "Líder Operacional":null,"Aux. Operacional":null,"Coordenador":null};
+function applyValueOrReset(selId,val){
+  const el=document.getElementById(selId);if(!el)return;
+  if(val===null||val===undefined){el.value="";return;}
+  const exists=Array.from(el.options).some(o=>o.value===val);
+  el.value=exists?val:"";
+}
+function syncFromMainFilter(){
+  const uMain=document.getElementById("f-uni").value;
+  const mMain=document.getElementById("f-mes").value;
+  const cMain=document.getElementById("f-cargo").value;
+  applyValueOrReset("dim-f-uni", uMain===""?"":(uMain in UNI_MAIN_TO_DIM?UNI_MAIN_TO_DIM[uMain]:uMain));
+  applyValueOrReset("pf-uni", uMain===""?"":(uMain in UNI_MAIN_TO_PF?UNI_MAIN_TO_PF[uMain]:uMain));
+  applyValueOrReset("pf-mes", mMain);
+  applyValueOrReset("dim-f-crg", cMain===""?"":(cMain in CRG_MAIN_TO_DIM?CRG_MAIN_TO_DIM[cMain]:null));
+  if(typeof renderDim==="function")renderDim();
+  if(typeof renderPresenca==="function")renderPresenca();
+}
 function cons(blocos){
   let P=0,fj=0,fi=0,tot=0,nm=new Set();
   blocos.forEach(b=>{Object.values(b.resumo).forEach(d=>{P+=d.presentes;fj+=d.fj;fi+=d.fi;});b.colaboradores.forEach(c=>nm.add(c.nome));});
