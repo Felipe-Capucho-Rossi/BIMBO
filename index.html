@@ -1148,7 +1148,7 @@ function render(){
   r4+=`<td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td></tr>`;
   const thDs=diasInfo.map(info=>`<th class="${info.weekend?"th-weekend":""}">${info.label}</th>`).join("");
   gFrozenWrapper.innerHTML=`<table class="tgrade tgrade-frozen"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Cargo</th><th>Turno</th></tr></thead><tbody>${r6f}${rFeriasF}${r5f}${r7f}${r3f}${r2f}${r1f}${r4f}${gRowsFrozen}</tbody></table>`;
-  gWrapper.innerHTML=`<table class="tgrade tgrade-scroll"><thead><tr>${thDs}<th class="gt-tot">Total<br>Pres.</th><th class="gt-tot">Total<br>FJ</th><th class="gt-tot">Total<br>FI</th><th class="gt-tot">Total<br>Folgas</th></tr></thead><tbody>${r6}${rFerias}${r5}${r7}${r3}${r2}${r1}${r4}${gRows}</tbody></table>`;
+  gWrapper.innerHTML=`<table class="tgrade tgrade-scroll"><thead><tr>${thDs}<th class="gt-tot">Tot. Pres.</th><th class="gt-tot">Tot. FJ</th><th class="gt-tot">Tot. FI</th><th class="gt-tot">Tot. Folgas</th></tr></thead><tbody>${r6}${rFerias}${r5}${r7}${r3}${r2}${r1}${r4}${gRows}</tbody></table>`;
   gFrozenWrapper.scrollTop=0;
 
   /* TABELA RESUMO */
