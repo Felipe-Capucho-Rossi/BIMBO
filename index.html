@@ -1181,7 +1181,7 @@ function render(){
     if(!colab.length)return;
     const groupLabel=`${b.unidade} — ${b.turno}`;
     gRowsFrozen+=`<tr class="tgroup-header"><td colspan="4">${groupLabel}</td></tr>`;
-    gRows+=`<tr class="tgroup-header"><td colspan="${diasOrdem.length}"></td><td class="gt-tot gtc-p">Total de Presenças no Mês</td><td class="gt-tot gtc-fj">Total de Faltas Justificadas no Mês</td><td class="gt-tot gtc-fi">Total de Faltas Injustificadas no Mês</td><td class="gt-tot gtc-flg">Total de Folgas no Mês</td></tr>`;
+    gRows+=`<tr class="tgroup-header"><td colspan="${totalScrollCols}"></td></tr>`;
 
     const arr={p:[],fj:[],fi:[],flg:[],fer:[],d:[],ferias:[]};
     diasOrdem.forEach(()=>{arr.p.push(0);arr.fj.push(0);arr.fi.push(0);arr.flg.push(0);arr.fer.push(0);arr.d.push(0);arr.ferias.push(0);});
