@@ -309,6 +309,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .tgrade-frozen td:nth-child(4){min-width:60px;max-width:90px;color:var(--blue);text-align:center}
 .tgrade tr:nth-child(even){background:#F8FAFC}
 .tgrade tr:hover td{background:#EEF5FF!important}
+.tgrade tr.tgroup-header td{background:var(--indigo)!important;color:#fff!important;font-weight:800;
+  text-align:left;padding:6px 8px;font-size:11px;letter-spacing:.3px}
 .mc{display:inline-block;height:15px;line-height:15px;overflow:hidden;vertical-align:top;
   font-size:10px;font-weight:800}
 /* Cores conforme formatação condicional da planilha "Controle de Presença Diária" — fonte colorida, preenchimento branco (igual à planilha original) */
@@ -1083,40 +1085,10 @@ function render(){
     return{label:`${d}/26, ${WD_ABBR[wd]}`,weekend:wd===0||wd===6};
   };
   const diasInfo=diasOrdem.map(diaInfo);
-  let rp=[],rfj=[],rfi=[],rflg=[],rfer=[],rd=[],rferias=[];
-  diasOrdem.forEach(()=>{rp.push(0);rfj.push(0);rfi.push(0);rflg.push(0);rfer.push(0);rd.push(0);rferias.push(0);});
-  let gRows="",gRowsFrozen="";
-  let gTotP=0,gTotFJ=0,gTotFI=0,gTotFLG=0;
-  blocos.forEach(b=>{
-    const colab=b.colaboradores.filter(cc=>!f.c||cc.cargo===f.c);
-    colab.forEach(col=>{
-      gRowsFrozen+=`<tr><td title="${col.nome}">${col.nome.length>18?col.nome.substring(0,16)+"…":col.nome}</td>`;
-      gRowsFrozen+=`<td title="${b.unidade}">${b.unidade}</td><td title="${col.cargo}">${col.cargo}</td><td title="${col.turno}">${col.turno}</td></tr>`;
-      gRows+="<tr>";
-      let cP=0,cFJ=0,cFI=0,cFLG=0;
-      diasOrdem.forEach((d,di)=>{
-        const tdCls=diasInfo[di].weekend?" td-weekend":"";
-        const m=col.dias[d];if(!m){gRows+=`<td class="${tdCls.trim()}"><span class="mc-dot">·</span></td>`;return;}
-        let cls="mc ";
-        if(m==="P"){cls+="mc-p";rp[di]++;cP++;}
-        else if(m==="FJ"){cls+="mc-fj";rfj[di]++;cFJ++;}
-        else if(m==="FI"){cls+="mc-fi";rfi[di]++;cFI++;}
-        else if(m==="AT"){cls+="mc-at";rfi[di]++;cFI++;}
-        else if(m==="FOLGA"){cls+="mc-flg";rflg[di]++;cFLG++;}
-        else if(m==="FER"){cls+="mc-fer";rfer[di]++;}
-        else if(m==="FERIAS"){cls+="mc-ferias";rferias[di]++;}
-        else if(m==="D"){cls+="mc-d";rd[di]++;}
-        else if(m==="INT")cls+="mc-int";
-        else cls+="mc-dot";
-        const lbl=m==="P"?"P":m==="FOLGA"?"Folga":m==="FER"?"Feriado":m==="FERIAS"?"Férias":m;
-        gRows+=`<td class="${tdCls.trim()}"><span class="${cls}">${lbl}</span></td>`;
-      });
-      gTotP+=cP;gTotFJ+=cFJ;gTotFI+=cFI;gTotFLG+=cFLG;
-      gRows+=`<td class="gt-tot">${cP}</td><td class="gt-tot">${cFJ||"—"}</td><td class="gt-tot">${cFI||"—"}</td><td class="gt-tot">${cFLG||"—"}</td>`;
-      gRows+="</tr>";
-    });
-  });
   const cR=(p,fj,fi)=>{const t=p+fj+fi;return t>0?Math.round(p/t*1000)/10:null;};
+  const totalScrollCols=diasOrdem.length+4;
+
+  /* Rótulos fixos das linhas de totais (painel congelado) — iguais para todo grupo */
   const r6f=`<tr class="tr-res"><td colspan="4" class="r-fer" style="text-align:right;padding-right:8px">Feriado</td></tr>`;
   const rFeriasF=`<tr class="tr-res"><td colspan="4" class="r-ferias" style="text-align:right;padding-right:8px">Férias</td></tr>`;
   const r5f=`<tr class="tr-res"><td colspan="4" class="r-flg" style="text-align:right;padding-right:8px">Folga</td></tr>`;
@@ -1125,30 +1097,79 @@ function render(){
   const r2f=`<tr class="tr-res"><td colspan="4" class="r-fj" style="text-align:right;padding-right:8px">Falta Justificada (FJ)</td></tr>`;
   const r1f=`<tr class="tr-res"><td colspan="4" class="r-p" style="text-align:right;padding-right:8px">Presença</td></tr>`;
   const r4f=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px;background:#fff!important;color:var(--indigo)!important">% de Presença</td></tr>`;
-  let r6="<tr class=\"tr-res\">",rFerias="<tr class=\"tr-res\">",r5="<tr class=\"tr-res\">",r7="<tr class=\"tr-res\">",
-      r3="<tr class=\"tr-res\">",r2="<tr class=\"tr-res\">",r1="<tr class=\"tr-res\">",r4="<tr class=\"tr-res\">";
-  diasOrdem.forEach((d,di)=>{
-    const tx=cR(rp[di],rfj[di],rfi[di]);
-    r6+=`<td class="r-fer">${rfer[di]||""}</td>`;
-    rFerias+=`<td class="r-ferias">${rferias[di]||""}</td>`;
-    r5+=`<td class="r-flg">${rflg[di]||""}</td>`;
-    r7+=`<td class="r-d">${rd[di]||""}</td>`;
-    r3+=`<td class="r-fi">${rfi[di]||""}</td>`;
-    r2+=`<td class="r-fj">${rfj[di]||""}</td>`;
-    r1+=`<td class="r-p">${rp[di]}</td>`;
-    r4+=`<td class="r-tx">${tx!=null?tx+"%":""}</td>`;
+  const labelRowsFrozen=r6f+rFeriasF+r5f+r7f+r3f+r2f+r1f+r4f;
+
+  function buildValueRows(arr,tot){
+    let r6="<tr class=\"tr-res\">",rFerias="<tr class=\"tr-res\">",r5="<tr class=\"tr-res\">",r7="<tr class=\"tr-res\">",
+        r3="<tr class=\"tr-res\">",r2="<tr class=\"tr-res\">",r1="<tr class=\"tr-res\">",r4="<tr class=\"tr-res\">";
+    diasOrdem.forEach((d,di)=>{
+      const tx=cR(arr.p[di],arr.fj[di],arr.fi[di]);
+      r6+=`<td class="r-fer">${arr.fer[di]||""}</td>`;
+      rFerias+=`<td class="r-ferias">${arr.ferias[di]||""}</td>`;
+      r5+=`<td class="r-flg">${arr.flg[di]||""}</td>`;
+      r7+=`<td class="r-d">${arr.d[di]||""}</td>`;
+      r3+=`<td class="r-fi">${arr.fi[di]||""}</td>`;
+      r2+=`<td class="r-fj">${arr.fj[di]||""}</td>`;
+      r1+=`<td class="r-p">${arr.p[di]}</td>`;
+      r4+=`<td class="r-tx">${tx!=null?tx+"%":""}</td>`;
+    });
+    r6+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
+    rFerias+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
+    r5+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot gt-res">${tot.flg}</td></tr>`;
+    r7+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
+    r3+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot gt-res">${tot.fi}</td><td class="gt-tot">—</td></tr>`;
+    r2+=`<td class="gt-tot">—</td><td class="gt-tot gt-res">${tot.fj}</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
+    r1+=`<td class="gt-tot gt-res">${tot.p}</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
+    r4+=`<td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td></tr>`;
+    return r6+rFerias+r5+r7+r3+r2+r1+r4;
+  }
+
+  let gRows="",gRowsFrozen="";
+  blocos.forEach(b=>{
+    const colab=b.colaboradores.filter(cc=>!f.c||cc.cargo===f.c);
+    if(!colab.length)return;
+    const groupLabel=`${b.unidade} — ${b.turno}`;
+    gRowsFrozen+=`<tr class="tgroup-header"><td colspan="4">${groupLabel}</td></tr>`;
+    gRows+=`<tr class="tgroup-header"><td colspan="${totalScrollCols}"></td></tr>`;
+
+    const arr={p:[],fj:[],fi:[],flg:[],fer:[],d:[],ferias:[]};
+    diasOrdem.forEach(()=>{arr.p.push(0);arr.fj.push(0);arr.fi.push(0);arr.flg.push(0);arr.fer.push(0);arr.d.push(0);arr.ferias.push(0);});
+    let bTotP=0,bTotFJ=0,bTotFI=0,bTotFLG=0;
+    let empFrozen="",empScroll="";
+    colab.forEach(col=>{
+      empFrozen+=`<tr><td title="${col.nome}">${col.nome.length>18?col.nome.substring(0,16)+"…":col.nome}</td>`;
+      empFrozen+=`<td title="${b.unidade}">${b.unidade}</td><td title="${col.cargo}">${col.cargo}</td><td title="${col.turno}">${col.turno}</td></tr>`;
+      empScroll+="<tr>";
+      let cP=0,cFJ=0,cFI=0,cFLG=0;
+      diasOrdem.forEach((d,di)=>{
+        const tdCls=diasInfo[di].weekend?" td-weekend":"";
+        const m=col.dias[d];if(!m){empScroll+=`<td class="${tdCls.trim()}"><span class="mc-dot">·</span></td>`;return;}
+        let cls="mc ";
+        if(m==="P"){cls+="mc-p";arr.p[di]++;cP++;}
+        else if(m==="FJ"){cls+="mc-fj";arr.fj[di]++;cFJ++;}
+        else if(m==="FI"){cls+="mc-fi";arr.fi[di]++;cFI++;}
+        else if(m==="AT"){cls+="mc-at";arr.fi[di]++;cFI++;}
+        else if(m==="FOLGA"){cls+="mc-flg";arr.flg[di]++;cFLG++;}
+        else if(m==="FER"){cls+="mc-fer";arr.fer[di]++;}
+        else if(m==="FERIAS"){cls+="mc-ferias";arr.ferias[di]++;}
+        else if(m==="D"){cls+="mc-d";arr.d[di]++;}
+        else if(m==="INT")cls+="mc-int";
+        else cls+="mc-dot";
+        const lbl=m==="P"?"P":m==="FOLGA"?"Folga":m==="FER"?"Feriado":m==="FERIAS"?"Férias":m;
+        empScroll+=`<td class="${tdCls.trim()}"><span class="${cls}">${lbl}</span></td>`;
+      });
+      bTotP+=cP;bTotFJ+=cFJ;bTotFI+=cFI;bTotFLG+=cFLG;
+      empScroll+=`<td class="gt-tot">${cP}</td><td class="gt-tot">${cFJ||"—"}</td><td class="gt-tot">${cFI||"—"}</td><td class="gt-tot">${cFLG||"—"}</td>`;
+      empScroll+="</tr>";
+    });
+
+    gRowsFrozen+=labelRowsFrozen+empFrozen;
+    gRows+=buildValueRows(arr,{p:bTotP,fj:bTotFJ,fi:bTotFI,flg:bTotFLG})+empScroll;
   });
-  r6+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
-  rFerias+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
-  r5+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot gt-res">${gTotFLG}</td></tr>`;
-  r7+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
-  r3+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot gt-res">${gTotFI}</td><td class="gt-tot">—</td></tr>`;
-  r2+=`<td class="gt-tot">—</td><td class="gt-tot gt-res">${gTotFJ}</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
-  r1+=`<td class="gt-tot gt-res">${gTotP}</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
-  r4+=`<td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td></tr>`;
+
   const thDs=diasInfo.map(info=>`<th class="${info.weekend?"th-weekend":""}">${info.label}</th>`).join("");
-  gFrozenWrapper.innerHTML=`<table class="tgrade tgrade-frozen"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Cargo</th><th>Turno</th></tr></thead><tbody>${r6f}${rFeriasF}${r5f}${r7f}${r3f}${r2f}${r1f}${r4f}${gRowsFrozen}</tbody></table>`;
-  gWrapper.innerHTML=`<table class="tgrade tgrade-scroll"><thead><tr>${thDs}<th class="gt-tot">Tot. Pres.</th><th class="gt-tot">Tot. FJ</th><th class="gt-tot">Tot. FI</th><th class="gt-tot">Tot. Folgas</th></tr></thead><tbody>${r6}${rFerias}${r5}${r7}${r3}${r2}${r1}${r4}${gRows}</tbody></table>`;
+  gFrozenWrapper.innerHTML=`<table class="tgrade tgrade-frozen"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Cargo</th><th>Turno</th></tr></thead><tbody>${gRowsFrozen}</tbody></table>`;
+  gWrapper.innerHTML=`<table class="tgrade tgrade-scroll"><thead><tr>${thDs}<th class="gt-tot">Tot. Pres.</th><th class="gt-tot">Tot. FJ</th><th class="gt-tot">Tot. FI</th><th class="gt-tot">Tot. Folgas</th></tr></thead><tbody>${gRows}</tbody></table>`;
   gFrozenWrapper.scrollTop=0;
 
   /* TABELA RESUMO */
