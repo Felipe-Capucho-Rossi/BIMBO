@@ -350,12 +350,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .th-weekend-swatch{background:#64748B}
 .oa-roxo-swatch{background:#9900FF}
 .oa-vermelho-swatch{background:#ED0000}
-.tr-alert td{height:9px;line-height:9px;padding:0;border-bottom:1px solid var(--border-light);
-  border-right:1px solid var(--border-light);box-sizing:content-box}
-.tr-alert td:first-child{text-align:right;padding-right:8px;font-size:9px;font-weight:800;
-  text-transform:uppercase;letter-spacing:.4px;color:var(--tx-muted);white-space:nowrap}
-.tr-alert td.oa-roxo{background:#9900FF!important}
-.tr-alert td.oa-vermelho{background:#ED0000!important}
+/* Hora extra / folga geral têm prioridade visual sobre o cinza de fim de semana */
+.tgrade th.oa-roxo{background:#9900FF!important}
+.tgrade th.oa-vermelho{background:#ED0000!important}
 
 /* ── TABELA RESUMO ── */
 table.tdet{width:100%;border-collapse:collapse}
@@ -1171,22 +1168,6 @@ function render(){
     gRowsFrozen+=`<tr class="tgroup-header"><td colspan="4">${groupLabel}</td></tr>`;
     gRows+=`<tr class="tgroup-header"><td colspan="${totalScrollCols}"></td></tr>`;
 
-    /* Alerta por data: roxo = hora extra (50%/100%) de qualquer colaborador do bloco
-       (fonte: espelhos de ponto); vermelho = todos em folga, ninguém trabalhou naquele dia. */
-    const otKey=b.unidade.startsWith("ANHANGUERA")?"ANHANGUERA":b.unidade;
-    const otSet=OT_DADOS[otKey]||{};
-    gRowsFrozen+=`<tr class="tr-alert"><td colspan="4">Alertas do período</td></tr>`;
-    let alertScroll=`<tr class="tr-alert">`;
-    diasOrdem.forEach(d=>{
-      const otNames=otSet[d];
-      const hasOT=otNames&&colab.some(cc=>otNames.includes(cc.nome));
-      const allFolga=colab.length>0&&colab.every(cc=>cc.dias[d]==="FOLGA");
-      const cls=hasOT?"oa-roxo":(allFolga?"oa-vermelho":"");
-      alertScroll+=`<td class="${cls}"></td>`;
-    });
-    alertScroll+=`<td class="gt-tot"></td><td class="gt-tot"></td><td class="gt-tot"></td><td class="gt-tot"></td></tr>`;
-    gRows+=alertScroll;
-
     const arr={p:[],fj:[],fi:[],flg:[],fer:[],d:[],ferias:[]};
     diasOrdem.forEach(()=>{arr.p.push(0);arr.fj.push(0);arr.fi.push(0);arr.flg.push(0);arr.fer.push(0);arr.d.push(0);arr.ferias.push(0);});
     let bTotP=0,bTotFJ=0,bTotFI=0,bTotFLG=0;
@@ -1222,7 +1203,26 @@ function render(){
     gRows+=buildValueRows(arr,{p:bTotP,fj:bTotFJ,fi:bTotFI,flg:bTotFLG})+empScroll;
   });
 
-  const thDs=diasInfo.map(info=>`<th class="${info.weekend?"th-weekend":""}">${info.label}</th>`).join("");
+  /* Formatação condicional na própria linha de data (cabeçalho):
+     roxo = hora extra (50%/100%) de qualquer colaborador visível naquela data
+     (fonte: espelhos de ponto); vermelho = todos em folga, ninguém trabalhou. */
+  const otAgg={};
+  diasOrdem.forEach(d=>{
+    let hasOT=false,everyoneFolga=true,anyColab=false;
+    blocos.forEach(b=>{
+      const colabB=b.colaboradores.filter(cc=>!f.c||cc.cargo===f.c);
+      if(!colabB.length)return;
+      const otKey=b.unidade.startsWith("ANHANGUERA")?"ANHANGUERA":b.unidade;
+      const otNames=(OT_DADOS[otKey]||{})[d];
+      if(otNames&&colabB.some(cc=>otNames.includes(cc.nome)))hasOT=true;
+      colabB.forEach(cc=>{anyColab=true;if(cc.dias[d]!=="FOLGA")everyoneFolga=false;});
+    });
+    otAgg[d]=hasOT?"oa-roxo":(anyColab&&everyoneFolga?"oa-vermelho":"");
+  });
+  const thDs=diasInfo.map((info,di)=>{
+    const extraCls=otAgg[diasOrdem[di]]?` ${otAgg[diasOrdem[di]]}`:"";
+    return `<th class="${info.weekend?"th-weekend":""}${extraCls}">${info.label}</th>`;
+  }).join("");
   gFrozenWrapper.innerHTML=`<table class="tgrade tgrade-frozen"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Cargo</th><th>Turno</th></tr></thead><tbody>${gRowsFrozen}</tbody></table>`;
   gWrapper.innerHTML=`<table class="tgrade tgrade-scroll"><thead><tr>${thDs}<th class="gt-tot">Tot. Pres.</th><th class="gt-tot">Tot. FJ</th><th class="gt-tot">Tot. FI</th><th class="gt-tot">Tot. Folgas</th></tr></thead><tbody>${gRows}</tbody></table>`;
   gFrozenWrapper.scrollTop=0;
