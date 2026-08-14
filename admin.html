@@ -141,7 +141,7 @@ td select,td input{padding:5px 6px;font-size:12.5px}
           <div><label>Mês detectado</label><input id="ezMes" readonly></div>
         </div>
         <table id="ezTabela">
-          <thead><tr><th>Colaborador</th><th>Cargo</th><th>Matrícula</th><th>Dias no arquivo</th><th>Para revisar</th></tr></thead>
+          <thead><tr><th>Colaborador</th><th>Cargo</th><th>Matrícula</th><th>Dias no arquivo</th><th>Para revisar</th><th>Horas Extras</th></tr></thead>
           <tbody></tbody>
         </table>
         <p style="font-size:11.5px;color:var(--tx2);margin-top:10px">"Para revisar" = dias sem ponto e sem observação reconhecida (não foi possível inferir presença/falta automaticamente).</p>
@@ -284,6 +284,14 @@ function inferStatus(obsTxt, temPonto){
   return temPonto ? 'P' : 'REVISAR';
 }
 
+// converte "HH:MM" em horas decimais (ex: "00:30" -> 0.5). Usado para ler as
+// colunas de Hora Extra (HE 50% / HE 100%) do espelho de ponto.
+function hhmmParaHoras(str){
+  const m = (str||'').toString().trim().match(/^(\d{1,2}):(\d{2})/);
+  if(!m) return 0;
+  return parseInt(m[1],10) + parseInt(m[2],10)/60;
+}
+
 function parseEspelhoSheet(ws){
   const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:''});
   const getCampo = (rotulo) => {
@@ -302,6 +310,7 @@ function parseEspelhoSheet(ws){
 
   const headerIdx = rows.findIndex(r => (r[0]||'').toString().trim() === 'Data');
   const dias = {};
+  const horasExtras = {};
   const revisar = [];
   let diasNoArquivo = 0;
   if(headerIdx >= 0){
@@ -310,6 +319,8 @@ function parseEspelhoSheet(ws){
     // as ultimas 8 colunas sao sempre CH,HT,HE50,HE100,HnEn,AT,FA,HN
     const totalCols = header.length;
     const chIdx = totalCols - 8;
+    const idxHe50 = chIdx + 2;
+    const idxHe100 = chIdx + 3;
     const gapStart = pontoIdx.length ? Math.max(...pontoIdx)+1 : 1;
     for(let i=headerIdx+1; i<rows.length; i++){
       const row = rows[i];
@@ -325,15 +336,21 @@ function parseEspelhoSheet(ws){
       dias[ddmm] = status;
       diasNoArquivo++;
       if(status === 'REVISAR') revisar.push(ddmm);
+
+      const he50 = hhmmParaHoras(row[idxHe50]);
+      const he100 = hhmmParaHoras(row[idxHe100]);
+      if(he50 > 0 || he100 > 0) horasExtras[ddmm] = {he50, he100};
     }
   }
-  return {nome, cargo, setor, matricula, mesNome, dias, diasNoArquivo, revisar};
+  return {nome, cargo, setor, matricula, mesNome, dias, horasExtras, diasNoArquivo, revisar};
 }
 
 // ---------- LEITURA DO ESPELHO DE PONTO EM PDF ----------
 // Reconstrói o texto do PDF linha a linha (agrupando pelo eixo Y de cada
 // trecho de texto) para poder aplicar a mesma lógica de leitura usada no
-// .xlsx. Cada página do PDF corresponde a um colaborador.
+// .xlsx. Cada página do PDF corresponde a um colaborador. Mantém também os
+// itens de texto de cada linha (com posição X) para conseguir localizar as
+// colunas de Hora Extra, que no PDF não têm índice fixo — só posição visual.
 async function extraiPaginasPDF(buf){
   const pdf = await pdfjsLib.getDocument({data: new Uint8Array(buf)}).promise;
   const paginas = [];
@@ -348,28 +365,32 @@ async function extraiPaginasPDF(buf){
     const linhas = [];
     let atual = [];
     let yAtual = null;
-    const TOL = 2.5;
+    const TOL = 0.5;
+    function flush(){
+      if(!atual.length) return;
+      atual.sort((a,b)=>a.x-b.x);
+      const texto = atual.map(i=>i.str).join(' ').replace(/\s+/g,' ').trim();
+      if(texto) linhas.push({texto, itens: atual.slice()});
+      atual = [];
+    }
     itens.forEach(it => {
       if(yAtual === null || Math.abs(it.y - yAtual) <= TOL){
         atual.push(it);
         if(yAtual === null) yAtual = it.y;
       } else {
-        atual.sort((a,b)=>a.x-b.x);
-        linhas.push(atual.map(i=>i.str).join(' ').replace(/\s+/g,' ').trim());
+        flush();
         atual = [it];
         yAtual = it.y;
       }
     });
-    if(atual.length){
-      atual.sort((a,b)=>a.x-b.x);
-      linhas.push(atual.map(i=>i.str).join(' ').replace(/\s+/g,' ').trim());
-    }
-    paginas.push(linhas.filter(l => l));
+    flush();
+    paginas.push(linhas);
   }
   return paginas;
 }
 
-function parseEspelhoPaginaPDF(linhas){
+function parseEspelhoPaginaPDF(linhasObjs){
+  const linhas = linhasObjs.map(l => l.texto);
   const acha = regex => { const l = linhas.find(l => regex.test(l)); return l || ''; };
 
   const nome = (acha(/^Nome:/i).match(/^Nome:\s*(.+)$/i) || [])[1] || '';
@@ -383,14 +404,33 @@ function parseEspelhoPaginaPDF(linhas){
   const mesNome = mesNum ? MES_PT[mesNum-1] : '';
 
   const headerIdx = linhas.findIndex(l => /^Data\s+Pontos/i.test(l));
+
+  // localiza as colunas de HE 50% e HE 100% pela linha de sub-cabeçalho
+  // ("50% 100%"), usando a posição horizontal (x) de cada token como
+  // referência — o PDF não tem colunas fixas por índice como o .xlsx.
+  let xHe50 = null, xHe100 = null;
+  if(headerIdx >= 0){
+    for(let i=headerIdx+1; i<Math.min(headerIdx+4, linhasObjs.length); i++){
+      const itensCab = linhasObjs[i].itens;
+      const i50 = itensCab.find(it => it.str.trim() === '50%');
+      const i100 = itensCab.find(it => it.str.trim() === '100%');
+      if(i50 || i100){
+        if(i50) xHe50 = i50.x;
+        if(i100) xHe100 = i100.x;
+        break;
+      }
+    }
+  }
+
   const dias = {};
+  const horasExtras = {};
   const revisar = [];
   let diasNoArquivo = 0;
   let obsBuffer = [];
 
   const inicio = headerIdx >= 0 ? headerIdx+1 : linhas.length;
-  for(let i=inicio; i<linhas.length; i++){
-    const l = linhas[i];
+  for(let i=inicio; i<linhasObjs.length; i++){
+    const l = linhasObjs[i].texto;
     if(/^\(\*\)/.test(l) || /^_{5,}/.test(l) || /^Atraso\s*\(AT\)/i.test(l)) break;
     if(/^[\d%\s]+$/.test(l)) continue; // sub-cabeçalho tipo "50% 100%"
 
@@ -407,9 +447,20 @@ function parseEspelhoPaginaPDF(linhas){
     dias[ddmm] = status;
     diasNoArquivo++;
     if(status === 'REVISAR') revisar.push(ddmm);
+
+    if(xHe50 !== null || xHe100 !== null){
+      const TOLX = 15;
+      const itensNumericos = linhasObjs[i].itens.filter(it => /^\d{1,2}:\d{2}$/.test(it.str.trim()));
+      let he50 = 0, he100 = 0;
+      itensNumericos.forEach(it => {
+        if(xHe50 !== null && Math.abs(it.x - xHe50) <= TOLX) he50 = hhmmParaHoras(it.str);
+        else if(xHe100 !== null && Math.abs(it.x - xHe100) <= TOLX) he100 = hhmmParaHoras(it.str);
+      });
+      if(he50 > 0 || he100 > 0) horasExtras[ddmm] = {he50, he100};
+    }
     obsBuffer = [];
   }
-  return {nome, cargo, setor, matricula, mesNome, dias, diasNoArquivo, revisar};
+  return {nome, cargo, setor, matricula, mesNome, dias, horasExtras, diasNoArquivo, revisar};
 }
 
 let EZ_PARSED = null;
@@ -440,10 +491,14 @@ document.getElementById('btnProcessarEz').addEventListener('click', async ()=>{
   document.getElementById('ezUnidade').innerHTML = UNIDS.map(u=>`<option value="${u}" ${u===unidadeDetectada?'selected':''}>${u}</option>`).join('');
   document.getElementById('ezMes').value = mesDetectado || '(não detectado)';
 
-  document.querySelector('#ezTabela tbody').innerHTML = empregados.map(e => `<tr>
+  document.querySelector('#ezTabela tbody').innerHTML = empregados.map(e => {
+    const totalHE = Object.values(e.horasExtras||{}).reduce((s,h)=>s+h.he50+h.he100,0);
+    return `<tr>
     <td class="tal">${e.nome}</td><td>${e.cargo}</td><td>${e.matricula}</td>
     <td>${e.diasNoArquivo}</td><td>${e.revisar.length ? e.revisar.length+' dia(s): '+e.revisar.join(', ') : '—'}</td>
-  </tr>`).join('');
+    <td>${totalHE>0 ? totalHE.toFixed(2)+'h' : '—'}</td>
+  </tr>`;
+  }).join('');
 
   document.getElementById('ezPreview').classList.remove('hidden');
   showMsg(msgEl, `${empregados.length} colaborador(es) lidos do arquivo. Confira a unidade/mês abaixo antes de salvar.`, true);
@@ -491,6 +546,10 @@ document.getElementById('btnConfirmarEz').addEventListener('click', async ()=>{
       if(!diasTocadosPorRegistro.has(registro)) diasTocadosPorRegistro.set(registro, new Set());
       diasTocadosPorRegistro.get(registro).add(ddmm);
     });
+    if(emp.horasExtras && Object.keys(emp.horasExtras).length){
+      colab.horasExtras = colab.horasExtras || {};
+      Object.entries(emp.horasExtras).forEach(([ddmm, he])=>{ colab.horasExtras[ddmm] = he; });
+    }
   });
 
   diasTocadosPorRegistro.forEach((dias, registro)=>{
