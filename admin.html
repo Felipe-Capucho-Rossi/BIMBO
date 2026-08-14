@@ -49,6 +49,8 @@ td select,td input{padding:5px 6px;font-size:12.5px}
 .dropzone-link{color:var(--blue);font-weight:700;text-decoration:underline}
 .dropzone-hint{font-size:11px;color:var(--tx-muted);margin-top:4px}
 .dropzone-filename{margin-top:10px;font-size:12.5px;font-weight:700;color:var(--indigo)}
+.remove-file{color:var(--red);font-size:11.5px;font-weight:700;text-decoration:none;margin-left:10px}
+.remove-file:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -162,15 +164,32 @@ const UNIDS = ["ANHANGUERA PRIMÁRIA","ANHANGUERA SECUNDÁRIA","BANDEIRANTES","G
 function showMsg(el, texto, ok){ el.innerHTML = `<div class="msg ${ok?'ok':'err'}">${texto}</div>`; setTimeout(()=>el.innerHTML='',5000); }
 
 // ---------- ARRASTAR E SOLTAR ARQUIVOS ----------
-function setupDropzone(zoneId, inputId, nameId){
+function setupDropzone(zoneId, inputId, nameId, previewId, aoLimpar){
   const zone = document.getElementById(zoneId);
   const input = document.getElementById(inputId);
   const nameEl = document.getElementById(nameId);
 
-  zone.addEventListener('click', ()=> input.click());
-  input.addEventListener('change', ()=>{
-    nameEl.textContent = input.files.length ? '📄 ' + input.files[0].name : '';
+  function limpar(){
+    input.value = '';
+    nameEl.innerHTML = '';
+    if(previewId) document.getElementById(previewId).classList.add('hidden');
+    if(aoLimpar) aoLimpar();
+  }
+
+  function mostraArquivo(){
+    if(!input.files.length){ nameEl.innerHTML = ''; return; }
+    const nome = input.files[0].name;
+    nameEl.innerHTML = `📄 ${nome} <a href="#" class="remove-file">✕ remover</a>`;
+    nameEl.querySelector('.remove-file').addEventListener('click', e=>{
+      e.preventDefault(); e.stopPropagation(); limpar();
+    });
+  }
+
+  zone.addEventListener('click', e=>{
+    if(e.target.closest('.remove-file')) return;
+    input.click();
   });
+  input.addEventListener('change', mostraArquivo);
 
   ['dragenter','dragover'].forEach(ev => zone.addEventListener(ev, e=>{
     e.preventDefault(); e.stopPropagation(); zone.classList.add('dragover');
@@ -183,13 +202,13 @@ function setupDropzone(zoneId, inputId, nameId){
     const files = e.dataTransfer.files;
     if(files && files.length){
       input.files = files;
-      nameEl.textContent = '📄 ' + files[0].name;
+      mostraArquivo();
     }
   });
 }
-setupDropzone('dimDropzone','dimFile','dimFileName');
-setupDropzone('pdDropzone','pdFile','pdFileName');
-setupDropzone('ezDropzone','ezFile','ezFileName');
+setupDropzone('dimDropzone','dimFile','dimFileName','dimFilePreview', ()=>{ DIMFILE_PARSED = null; document.getElementById('dimFileMsg').innerHTML=''; });
+setupDropzone('pdDropzone','pdFile','pdFileName','pdPreview', ()=>{ PD_PARSED = null; document.getElementById('pdMsg').innerHTML=''; });
+setupDropzone('ezDropzone','ezFile','ezFileName','ezPreview', ()=>{ EZ_PARSED = null; document.getElementById('ezMsg').innerHTML=''; });
 
 // ---------- AUTENTICAÇÃO ----------
 async function checarSessao(){
@@ -409,13 +428,15 @@ function achaColIndice(header, textoExato){
   return header.findIndex(h => (h||'').toString().trim().toUpperCase() === textoExato.toUpperCase());
 }
 
-function parsePresencaDiariaSheet(ws, sheetName){
+function parsePresencaDiariaSheet(ws, sheetName, fileName){
   const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
 
   const partes = sheetName.split(' - ');
   const unidadeTxt = (partes[0]||'').replace(/bimbo/i,'').trim();
   const turnoTxt = (partes[1] || '').trim();
-  const unidade = detectaUnidade(unidadeTxt) || detectaUnidade(sheetName);
+  // A unidade normalmente vem do nome da aba ("Bimbo Mogi - ADM"), mas em arquivos
+  // com aba única e nome genérico (ex: "Planilha1") ela só aparece no nome do arquivo.
+  const unidade = detectaUnidade(unidadeTxt) || detectaUnidade(sheetName) || detectaUnidade(fileName);
   let turno = 'ADM';
   if(/1/.test(turnoTxt)) turno = '1º Turno';
   else if(/2/.test(turnoTxt)) turno = '2º Turno';
@@ -507,10 +528,11 @@ document.getElementById('btnProcessarPd').addEventListener('click', async ()=>{
   const msgEl = document.getElementById('pdMsg');
   const fileInput = document.getElementById('pdFile');
   if(!fileInput.files.length){ showMsg(msgEl,'Selecione o arquivo .xlsx primeiro.',false); return; }
+  const nomeArquivo = fileInput.files[0].name;
   const buf = await fileInput.files[0].arrayBuffer();
   const wb = XLSX.read(buf, {type:'array', cellDates:true});
 
-  const abas = wb.SheetNames.map(name => parsePresencaDiariaSheet(wb.Sheets[name], name))
+  const abas = wb.SheetNames.map(name => parsePresencaDiariaSheet(wb.Sheets[name], name, nomeArquivo))
     .filter(a => a.colaboradores.length || a.desligamentos.length);
 
   if(!abas.length){ showMsg(msgEl,'Não consegui reconhecer nenhuma aba de turno nesse arquivo.',false); return; }
