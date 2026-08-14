@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Painel RH · Bimbo · Fastlog</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --blue:#0079C2; --blue-dark:#005A9E; --indigo:#1E3A6E;
+  --bg:#F0F2F5; --card:#FFF; --border:#DDE2EA;
+  --green:#0E7A43; --green-bg:#E8F5EE;
+  --red:#C0281C; --red-bg:#FEE2E0;
+  --tx:#0F1B2D; --tx2:#4B5768; --tx-muted:#8FA8C4;
+  --font:'Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--indigo);color:var(--tx);min-height:100vh}
+.topbar{background:var(--tx);color:#fff;padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
+.topbar strong{font-size:15px}
+.topbar small{color:var(--tx-muted);display:block;font-size:11px}
+.wrap{max-width:820px;margin:0 auto;padding:28px 20px 60px}
+.card{background:var(--card);border-radius:10px;padding:22px;margin-bottom:20px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+h1{font-size:18px;margin-bottom:4px}
+h2{font-size:15px;color:var(--indigo);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--border)}
+label{display:block;font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px}
+input,select{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:6px;font-size:13.5px;font-family:var(--font)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:14px}
+.btn{background:var(--blue);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer}
+.btn:hover{background:var(--blue-dark)}
+.btn.ghost{background:transparent;color:var(--tx2);border:1px solid var(--border)}
+.msg{padding:10px 12px;border-radius:6px;font-size:13px;font-weight:600;margin-top:12px}
+.msg.err{background:var(--red-bg);color:var(--red)}
+.msg.ok{background:var(--green-bg);color:var(--green)}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px}
+th{text-align:left;font-size:10.5px;text-transform:uppercase;color:var(--tx2);padding:8px;border-bottom:2px solid var(--border)}
+td{padding:7px 8px;border-bottom:1px solid var(--border)}
+td select,td input{padding:5px 6px;font-size:12.5px}
+.hidden{display:none!important}
+.login-box{max-width:360px;margin:60px auto}
+.pill{display:inline-block;background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px}
+.small-btn{padding:5px 10px;font-size:11.5px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div><strong>Painel da Analista de RH</strong><small>Fastlog · Bimbo — separado do dashboard de apresentação</small></div>
+  <button class="btn ghost" id="btnLogout" style="display:none">Sair</button>
+</div>
+
+<div class="wrap">
+
+  <div class="card login-box" id="loginCard">
+    <h1>Entrar</h1>
+    <p style="color:var(--tx2);font-size:13px;margin:8px 0 16px">Acesso restrito à analista de RH.</p>
+    <div class="row" style="grid-template-columns:1fr">
+      <div><label>E-mail</label><input type="email" id="loginEmail"></div>
+      <div><label>Senha</label><input type="password" id="loginSenha"></div>
+    </div>
+    <button class="btn" id="btnLogin" style="width:100%">Entrar</button>
+    <div id="loginMsg"></div>
+  </div>
+
+  <div id="painel" class="hidden">
+
+    <div class="card">
+      <h2>Lançar Espelho de Ponto</h2>
+      <div class="row">
+        <div><label>Unidade</label><select id="epUnidade"></select></div>
+        <div><label>Mês</label><select id="epMes"></select></div>
+        <div><label>Turno</label><select id="epTurno">
+          <option>1º Turno</option><option>2º Turno</option><option>3º Turno</option><option>ADM</option>
+        </select></div>
+        <div><label>Dia (dd/mm)</label><input id="epDia" placeholder="Ex: 05/08"></div>
+      </div>
+      <button class="btn" id="btnCarregarEp">Carregar colaboradores desse dia</button>
+      <div id="epInfo" style="font-size:12px;color:var(--tx2);margin-top:8px"></div>
+
+      <table id="epTabela" class="hidden">
+        <thead><tr><th>Colaborador</th><th>Cargo</th><th style="width:150px">Status</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <div id="epAddColab" class="hidden" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <label>Adicionar colaborador novo a este turno</label>
+        <div class="row" style="grid-template-columns:2fr 2fr 1fr">
+          <input id="novoColabNome" placeholder="Nome completo">
+          <input id="novoColabCargo" placeholder="Cargo">
+          <button class="btn ghost small-btn" id="btnAddColabLinha">Adicionar</button>
+        </div>
+      </div>
+
+      <div id="epSalvarWrap" class="hidden" style="margin-top:16px">
+        <button class="btn" id="btnSalvarEp">Salvar espelho do dia</button>
+      </div>
+      <div id="epMsg"></div>
+    </div>
+
+    <div class="card">
+      <h2>Quadro de Dimensionamento</h2>
+      <table id="dimTabela">
+        <thead><tr><th>Unidade</th><th>Cargo</th><th style="width:100px">Solicitado</th><th style="width:100px">Contratado</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <label>Adicionar linha</label>
+        <div class="row" style="grid-template-columns:1.5fr 1.5fr 1fr 1fr auto">
+          <select id="dimNovaUnidade"></select>
+          <input id="dimNovoCargo" placeholder="Cargo">
+          <input type="number" id="dimNovoSolicitado" min="0" placeholder="Solicitado">
+          <input type="number" id="dimNovoRealizado" min="0" placeholder="Contratado">
+          <button class="btn ghost small-btn" id="btnAddDimLinha">Adicionar</button>
+        </div>
+      </div>
+      <div style="margin-top:16px"><button class="btn" id="btnSalvarDim">Salvar quadro de dimensionamento</button></div>
+      <div id="dimMsg"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ===================================================================
+   Preencha com os dados do MESMO projeto Supabase usado no index.html
+   =================================================================== */
+const SUPABASE_URL = 'https://fiasqvmkwvadcbzsytel.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpYXNxdm1rd3ZhZGNienN5dGVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MTM5MTAsImV4cCI6MjEwMjI4OTkxMH0.1j78E0318wzllqMD5Zo9yjqWuD9oxn-YB2681j3BAfA';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const UNIDS = ["ANHANGUERA PRIMÁRIA","ANHANGUERA SECUNDÁRIA","BANDEIRANTES","GRU","MOGI","RAPOSO","SANTO ANDRÉ","SBC","SOROCABA","VALINHOS"];
+const MESES = ["Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const STATUS = { P:"Presença", FOLGA:"Folga", FJ:"Falta Justificada", FI:"Falta Injustificada", AT:"Atestado", FER:"Feriado", D:"Desligado", INT:"Integração" };
+
+let DADOS = null, DIM_DADOS = null;
+
+function fill(sel, arr){ sel.innerHTML = arr.map(v=>`<option value="${v}">${v}</option>`).join(''); }
+fill(document.getElementById('epUnidade'), UNIDS);
+fill(document.getElementById('epMes'), MESES);
+fill(document.getElementById('dimNovaUnidade'), UNIDS);
+
+function showMsg(el, texto, ok){ el.innerHTML = `<div class="msg ${ok?'ok':'err'}">${texto}</div>`; setTimeout(()=>el.innerHTML='',5000); }
+
+// ---------- AUTENTICAÇÃO ----------
+async function checarSessao(){
+  const {data:{session}} = await sb.auth.getSession();
+  aplicarSessao(session?.user || null);
+}
+function aplicarSessao(user){
+  document.getElementById('loginCard').classList.toggle('hidden', !!user);
+  document.getElementById('painel').classList.toggle('hidden', !user);
+  document.getElementById('btnLogout').style.display = user ? 'inline-block' : 'none';
+  if(user) carregarTudo();
+}
+document.getElementById('btnLogin').addEventListener('click', async ()=>{
+  const email = document.getElementById('loginEmail').value.trim();
+  const senha = document.getElementById('loginSenha').value;
+  const {data, error} = await sb.auth.signInWithPassword({email, password: senha});
+  if(error){ showMsg(document.getElementById('loginMsg'), 'Login inválido: '+error.message, false); return; }
+  aplicarSessao(data.user);
+});
+document.getElementById('btnLogout').addEventListener('click', async ()=>{ await sb.auth.signOut(); aplicarSessao(null); });
+
+// ---------- CARREGAR DADOS ----------
+async function carregarTudo(){
+  const {data, error} = await sb.from('dashboard_dados').select('chave,payload').in('chave',['DADOS','DIM_DADOS']);
+  if(error){ console.error(error); return; }
+  const mapa = {}; (data||[]).forEach(r=>mapa[r.chave]=r.payload);
+  DADOS = mapa.DADOS || [];
+  DIM_DADOS = mapa.DIM_DADOS || [];
+  renderDimTabela();
+}
+
+// ---------- ESPELHO DE PONTO ----------
+let registroAtual = null;
+
+document.getElementById('btnCarregarEp').addEventListener('click', ()=>{
+  const unidade = document.getElementById('epUnidade').value;
+  const mes = document.getElementById('epMes').value;
+  const turno = document.getElementById('epTurno').value;
+  const dia = document.getElementById('epDia').value.trim();
+  const info = document.getElementById('epInfo');
+  if(!/^\d{2}\/\d{2}$/.test(dia)){ showMsg(document.getElementById('epMsg'), 'Informe o dia no formato dd/mm, ex: 05/08.', false); return; }
+
+  registroAtual = DADOS.find(r=>r.unidade===unidade && r.mes===mes && r.turno===turno);
+  if(!registroAtual){
+    registroAtual = {unidade, mes, turno, resumo:{}, colaboradores:[]};
+    DADOS.push(registroAtual);
+    info.textContent = 'Novo registro criado para esta unidade/mês/turno (nenhum colaborador cadastrado ainda — adicione abaixo).';
+  } else {
+    info.textContent = `${registroAtual.colaboradores.length} colaborador(es) cadastrados neste turno.`;
+  }
+
+  renderTabelaColabs(dia);
+  document.getElementById('epTabela').classList.remove('hidden');
+  document.getElementById('epAddColab').classList.remove('hidden');
+  document.getElementById('epSalvarWrap').classList.remove('hidden');
+});
+
+function renderTabelaColabs(dia){
+  const tbody = document.querySelector('#epTabela tbody');
+  tbody.innerHTML = registroAtual.colaboradores.map((c,i)=>{
+    const atual = c.dias?.[dia] || 'P';
+    return `<tr data-idx="${i}">
+      <td>${c.nome}</td><td>${c.cargo||''}</td>
+      <td><select class="status-sel">${Object.keys(STATUS).map(s=>`<option value="${s}" ${s===atual?'selected':''}>${s} — ${STATUS[s]}</option>`).join('')}</select></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="3" style="color:var(--tx-muted)">Nenhum colaborador ainda — adicione abaixo.</td></tr>';
+}
+
+document.getElementById('btnAddColabLinha').addEventListener('click', ()=>{
+  const nome = document.getElementById('novoColabNome').value.trim();
+  const cargo = document.getElementById('novoColabCargo').value.trim();
+  if(!nome){ return; }
+  registroAtual.colaboradores.push({nome, cargo, turno: registroAtual.turno, dias:{}});
+  document.getElementById('novoColabNome').value=''; document.getElementById('novoColabCargo').value='';
+  renderTabelaColabs(document.getElementById('epDia').value.trim());
+});
+
+document.getElementById('btnSalvarEp').addEventListener('click', async ()=>{
+  const dia = document.getElementById('epDia').value.trim();
+  const linhas = [...document.querySelectorAll('#epTabela tbody tr[data-idx]')];
+  linhas.forEach(tr=>{
+    const idx = parseInt(tr.dataset.idx,10);
+    const status = tr.querySelector('.status-sel').value;
+    registroAtual.colaboradores[idx].dias = registroAtual.colaboradores[idx].dias || {};
+    registroAtual.colaboradores[idx].dias[dia] = status;
+  });
+
+  // recalcula o resumo (aggregate) do dia a partir dos status individuais
+  const total = registroAtual.colaboradores.length;
+  const presentes = registroAtual.colaboradores.filter(c=>c.dias[dia]==='P').length;
+  const fj = registroAtual.colaboradores.filter(c=>c.dias[dia]==='FJ').length;
+  const fi = registroAtual.colaboradores.filter(c=>c.dias[dia]==='FI' || c.dias[dia]==='AT').length;
+  registroAtual.resumo = registroAtual.resumo || {};
+  registroAtual.resumo[dia] = { data: dia, presentes, fj, fi, taxa: total ? Math.round(presentes/total*1000)/10 : 0 };
+
+  const msgEl = document.getElementById('epMsg');
+  const {error} = await sb.from('dashboard_dados').upsert({chave:'DADOS', payload: DADOS, updated_at: new Date().toISOString()}, {onConflict:'chave'});
+  if(error){ showMsg(msgEl, 'Erro ao salvar: '+error.message, false); return; }
+  showMsg(msgEl, 'Espelho salvo. O dashboard já reflete essa atualização.', true);
+});
+
+// ---------- DIMENSIONAMENTO ----------
+function renderDimTabela(){
+  const tbody = document.querySelector('#dimTabela tbody');
+  tbody.innerHTML = DIM_DADOS.map((d,i)=>`<tr data-idx="${i}">
+    <td>${d.u}</td><td>${d.c}</td>
+    <td><input type="number" min="0" class="dim-s" value="${d.s}"></td>
+    <td><input type="number" min="0" class="dim-r" value="${d.r}"></td>
+  </tr>`).join('');
+}
+
+document.getElementById('btnAddDimLinha').addEventListener('click', ()=>{
+  const u = document.getElementById('dimNovaUnidade').value;
+  const c = document.getElementById('dimNovoCargo').value.trim();
+  const s = parseInt(document.getElementById('dimNovoSolicitado').value||'0',10);
+  const r = parseInt(document.getElementById('dimNovoRealizado').value||'0',10);
+  if(!c){ return; }
+  DIM_DADOS.push({u, c, s, r});
+  document.getElementById('dimNovoCargo').value='';
+  document.getElementById('dimNovoSolicitado').value='';
+  document.getElementById('dimNovoRealizado').value='';
+  renderDimTabela();
+});
+
+document.getElementById('btnSalvarDim').addEventListener('click', async ()=>{
+  const linhas = [...document.querySelectorAll('#dimTabela tbody tr[data-idx]')];
+  linhas.forEach(tr=>{
+    const idx = parseInt(tr.dataset.idx,10);
+    DIM_DADOS[idx].s = parseInt(tr.querySelector('.dim-s').value||'0',10);
+    DIM_DADOS[idx].r = parseInt(tr.querySelector('.dim-r').value||'0',10);
+  });
+  const msgEl = document.getElementById('dimMsg');
+  const {error} = await sb.from('dashboard_dados').upsert({chave:'DIM_DADOS', payload: DIM_DADOS, updated_at: new Date().toISOString()}, {onConflict:'chave'});
+  if(error){ showMsg(msgEl, 'Erro ao salvar: '+error.message, false); return; }
+  showMsg(msgEl, 'Quadro de dimensionamento salvo. O dashboard já reflete essa atualização.', true);
+});
+
+checarSessao();
+</script>
+</body>
+</html>
