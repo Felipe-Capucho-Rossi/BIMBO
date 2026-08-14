@@ -41,6 +41,14 @@ td select,td input{padding:5px 6px;font-size:12.5px}
 .login-box{max-width:360px;margin:60px auto}
 .pill{display:inline-block;background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px}
 .small-btn{padding:5px 10px;font-size:11.5px}
+.dropzone{border:2px dashed var(--border);border-radius:8px;padding:26px 16px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;background:#FAFBFC;margin-bottom:14px}
+.dropzone:hover{border-color:var(--blue);background:#F3F9FF}
+.dropzone.dragover{border-color:var(--blue);background:#E8F3FF}
+.dropzone-icon{font-size:24px;color:var(--tx-muted);margin-bottom:6px}
+.dropzone-text{font-size:13px;color:var(--tx2)}
+.dropzone-link{color:var(--blue);font-weight:700;text-decoration:underline}
+.dropzone-hint{font-size:11px;color:var(--tx-muted);margin-top:4px}
+.dropzone-filename{margin-top:10px;font-size:12.5px;font-weight:700;color:var(--indigo)}
 </style>
 </head>
 <body>
@@ -68,9 +76,15 @@ td select,td input{padding:5px 6px;font-size:12.5px}
     <div class="card">
       <h2>Importar Controle de Contratações (Dimensionamento Geral)</h2>
       <p style="color:var(--tx2);font-size:12.5px;margin-bottom:12px">Planilha "CONTROLE DE CONTRATAÇÕES", aba "DIMENSIONAMENTO GERAL ATUALIZAD" — cobre todas as unidades de uma vez. Substitui o quadro de dimensionamento inteiro pelos números atuais dessa planilha.</p>
-      <div class="row">
-        <div><label>Arquivo (.xlsx)</label><input type="file" id="dimFile" accept=".xlsx"></div>
+
+      <div class="dropzone" id="dimDropzone">
+        <input type="file" id="dimFile" accept=".xlsx" class="hidden">
+        <div class="dropzone-icon">⬆</div>
+        <div class="dropzone-text">Arraste o arquivo .xlsx aqui, ou <span class="dropzone-link">clique para escolher</span></div>
+        <div class="dropzone-hint">Aceita .xlsx</div>
+        <div class="dropzone-filename" id="dimFileName"></div>
       </div>
+
       <button class="btn" id="btnProcessarDimFile">Processar arquivo</button>
       <div id="dimFileMsg"></div>
       <div id="dimFilePreview" class="hidden" style="margin-top:16px">
@@ -84,9 +98,15 @@ td select,td input{padding:5px 6px;font-size:12.5px}
     <div class="card">
       <h2>Importar Controle de Presença Diária</h2>
       <p style="color:var(--tx2);font-size:12.5px;margin-bottom:12px">Planilha "Controle de Presença Diária" (uma aba por turno, ex: "Bimbo Sorocaba - 2º Turno"). Detecta unidade, turno e mês automaticamente — já vem com o status de cada dia classificado (Presença/Folga/Feriado/Férias/FJ/FI/Desligado).</p>
-      <div class="row">
-        <div><label>Arquivo (.xlsx)</label><input type="file" id="pdFile" accept=".xlsx"></div>
+
+      <div class="dropzone" id="pdDropzone">
+        <input type="file" id="pdFile" accept=".xlsx" class="hidden">
+        <div class="dropzone-icon">⬆</div>
+        <div class="dropzone-text">Arraste o arquivo .xlsx aqui, ou <span class="dropzone-link">clique para escolher</span></div>
+        <div class="dropzone-hint">Aceita .xlsx</div>
+        <div class="dropzone-filename" id="pdFileName"></div>
       </div>
+
       <button class="btn" id="btnProcessarPd">Processar arquivo</button>
       <div id="pdMsg"></div>
       <div id="pdPreview" class="hidden" style="margin-top:16px">
@@ -99,13 +119,16 @@ td select,td input{padding:5px 6px;font-size:12.5px}
 
     <div class="card">
       <h2>Importar Espelho de Ponto (arquivo EzPoint)</h2>
-      <p style="color:var(--tx2);font-size:12.5px;margin-bottom:12px">Envie o .xlsx exportado do EzPoint (uma aba por colaborador). O sistema detecta a unidade e o mês automaticamente — confirme antes de salvar.</p>
-      <div class="row">
-        <div><label>Arquivo (.xlsx)</label><input type="file" id="ezFile" accept=".xlsx"></div>
-        <div><label>Turno (o arquivo não informa)</label><select id="ezTurno">
-          <option>1º Turno</option><option>2º Turno</option><option>3º Turno</option><option>ADM</option>
-        </select></div>
+      <p style="color:var(--tx2);font-size:12.5px;margin-bottom:12px">Envie o .xlsx exportado do EzPoint (uma aba por colaborador). O sistema detecta a unidade e o mês automaticamente. O turno é identificado casando a matrícula com quem já foi importado pela Planilha de Presença Diária; se ainda não houver correspondência, o colaborador entra como "A definir" até a Presença Diária daquele mês ser importada.</p>
+
+      <div class="dropzone" id="ezDropzone">
+        <input type="file" id="ezFile" accept=".xlsx" class="hidden">
+        <div class="dropzone-icon">⬆</div>
+        <div class="dropzone-text">Arraste o arquivo .xlsx aqui, ou <span class="dropzone-link">clique para escolher</span></div>
+        <div class="dropzone-hint">Aceita .xlsx</div>
+        <div class="dropzone-filename" id="ezFileName"></div>
       </div>
+
       <button class="btn" id="btnProcessarEz">Processar arquivo</button>
       <div id="ezMsg"></div>
 
@@ -118,62 +141,9 @@ td select,td input{padding:5px 6px;font-size:12.5px}
           <thead><tr><th>Colaborador</th><th>Cargo</th><th>Matrícula</th><th>Dias no arquivo</th><th>Para revisar</th></tr></thead>
           <tbody></tbody>
         </table>
-        <p style="font-size:11.5px;color:var(--tx2);margin-top:10px">"Para revisar" = dias sem ponto e sem observação reconhecida (não foi possível inferir presença/falta automaticamente). Esses dias entram como está — corrija depois em "Lançar Espelho de Ponto" se necessário.</p>
+        <p style="font-size:11.5px;color:var(--tx2);margin-top:10px">"Para revisar" = dias sem ponto e sem observação reconhecida (não foi possível inferir presença/falta automaticamente).</p>
         <div style="margin-top:14px"><button class="btn" id="btnConfirmarEz">Confirmar e salvar no dashboard</button></div>
       </div>
-    </div>
-
-    <div class="card">
-      <h2>Lançar Espelho de Ponto</h2>
-      <div class="row">
-        <div><label>Unidade</label><select id="epUnidade"></select></div>
-        <div><label>Mês</label><select id="epMes"></select></div>
-        <div><label>Turno</label><select id="epTurno">
-          <option>1º Turno</option><option>2º Turno</option><option>3º Turno</option><option>ADM</option>
-        </select></div>
-        <div><label>Dia (dd/mm)</label><input id="epDia" placeholder="Ex: 05/08"></div>
-      </div>
-      <button class="btn" id="btnCarregarEp">Carregar colaboradores desse dia</button>
-      <div id="epInfo" style="font-size:12px;color:var(--tx2);margin-top:8px"></div>
-
-      <table id="epTabela" class="hidden">
-        <thead><tr><th>Colaborador</th><th>Cargo</th><th style="width:150px">Status</th></tr></thead>
-        <tbody></tbody>
-      </table>
-
-      <div id="epAddColab" class="hidden" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-        <label>Adicionar colaborador novo a este turno</label>
-        <div class="row" style="grid-template-columns:2fr 2fr 1fr">
-          <input id="novoColabNome" placeholder="Nome completo">
-          <input id="novoColabCargo" placeholder="Cargo">
-          <button class="btn ghost small-btn" id="btnAddColabLinha">Adicionar</button>
-        </div>
-      </div>
-
-      <div id="epSalvarWrap" class="hidden" style="margin-top:16px">
-        <button class="btn" id="btnSalvarEp">Salvar espelho do dia</button>
-      </div>
-      <div id="epMsg"></div>
-    </div>
-
-    <div class="card">
-      <h2>Quadro de Dimensionamento</h2>
-      <table id="dimTabela">
-        <thead><tr><th>Unidade</th><th>Cargo</th><th style="width:100px">Solicitado</th><th style="width:100px">Contratado</th></tr></thead>
-        <tbody></tbody>
-      </table>
-      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-        <label>Adicionar linha</label>
-        <div class="row" style="grid-template-columns:1.5fr 1.5fr 1fr 1fr auto">
-          <select id="dimNovaUnidade"></select>
-          <input id="dimNovoCargo" placeholder="Cargo">
-          <input type="number" id="dimNovoSolicitado" min="0" placeholder="Solicitado">
-          <input type="number" id="dimNovoRealizado" min="0" placeholder="Contratado">
-          <button class="btn ghost small-btn" id="btnAddDimLinha">Adicionar</button>
-        </div>
-      </div>
-      <div style="margin-top:16px"><button class="btn" id="btnSalvarDim">Salvar quadro de dimensionamento</button></div>
-      <div id="dimMsg"></div>
     </div>
 
   </div>
@@ -188,17 +158,38 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const UNIDS = ["ANHANGUERA PRIMÁRIA","ANHANGUERA SECUNDÁRIA","BANDEIRANTES","GRU","MOGI","RAPOSO","SANTO ANDRÉ","SBC","SOROCABA","VALINHOS"];
-const MESES = ["Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-const STATUS = { P:"Presença", FOLGA:"Folga", FJ:"Falta Justificada", FI:"Falta Injustificada", AT:"Atestado", FER:"Feriado", FERIAS:"Férias", D:"Desligado", INT:"Integração" };
-
-let DADOS = null, DIM_DADOS = null;
-
-function fill(sel, arr){ sel.innerHTML = arr.map(v=>`<option value="${v}">${v}</option>`).join(''); }
-fill(document.getElementById('epUnidade'), UNIDS);
-fill(document.getElementById('epMes'), MESES);
-fill(document.getElementById('dimNovaUnidade'), UNIDS);
 
 function showMsg(el, texto, ok){ el.innerHTML = `<div class="msg ${ok?'ok':'err'}">${texto}</div>`; setTimeout(()=>el.innerHTML='',5000); }
+
+// ---------- ARRASTAR E SOLTAR ARQUIVOS ----------
+function setupDropzone(zoneId, inputId, nameId){
+  const zone = document.getElementById(zoneId);
+  const input = document.getElementById(inputId);
+  const nameEl = document.getElementById(nameId);
+
+  zone.addEventListener('click', ()=> input.click());
+  input.addEventListener('change', ()=>{
+    nameEl.textContent = input.files.length ? '📄 ' + input.files[0].name : '';
+  });
+
+  ['dragenter','dragover'].forEach(ev => zone.addEventListener(ev, e=>{
+    e.preventDefault(); e.stopPropagation(); zone.classList.add('dragover');
+  }));
+  ['dragleave','dragend'].forEach(ev => zone.addEventListener(ev, e=>{
+    e.preventDefault(); e.stopPropagation(); zone.classList.remove('dragover');
+  }));
+  zone.addEventListener('drop', e=>{
+    e.preventDefault(); e.stopPropagation(); zone.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if(files && files.length){
+      input.files = files;
+      nameEl.textContent = '📄 ' + files[0].name;
+    }
+  });
+}
+setupDropzone('dimDropzone','dimFile','dimFileName');
+setupDropzone('pdDropzone','pdFile','pdFileName');
+setupDropzone('ezDropzone','ezFile','ezFileName');
 
 // ---------- AUTENTICAÇÃO ----------
 async function checarSessao(){
@@ -209,7 +200,6 @@ function aplicarSessao(user){
   document.getElementById('loginCard').classList.toggle('hidden', !!user);
   document.getElementById('painel').classList.toggle('hidden', !user);
   document.getElementById('btnLogout').style.display = user ? 'inline-block' : 'none';
-  if(user) carregarTudo();
 }
 document.getElementById('btnLogin').addEventListener('click', async ()=>{
   const email = document.getElementById('loginEmail').value.trim();
@@ -219,122 +209,6 @@ document.getElementById('btnLogin').addEventListener('click', async ()=>{
   aplicarSessao(data.user);
 });
 document.getElementById('btnLogout').addEventListener('click', async ()=>{ await sb.auth.signOut(); aplicarSessao(null); });
-
-// ---------- CARREGAR DADOS ----------
-async function carregarTudo(){
-  const {data, error} = await sb.from('dashboard_dados').select('chave,payload').in('chave',['DADOS','DIM_DADOS']);
-  if(error){ console.error(error); return; }
-  const mapa = {}; (data||[]).forEach(r=>mapa[r.chave]=r.payload);
-  DADOS = mapa.DADOS || [];
-  DIM_DADOS = mapa.DIM_DADOS || [];
-  renderDimTabela();
-}
-
-// ---------- ESPELHO DE PONTO ----------
-let registroAtual = null;
-
-document.getElementById('btnCarregarEp').addEventListener('click', ()=>{
-  const unidade = document.getElementById('epUnidade').value;
-  const mes = document.getElementById('epMes').value;
-  const turno = document.getElementById('epTurno').value;
-  const dia = document.getElementById('epDia').value.trim();
-  const info = document.getElementById('epInfo');
-  if(!/^\d{2}\/\d{2}$/.test(dia)){ showMsg(document.getElementById('epMsg'), 'Informe o dia no formato dd/mm, ex: 05/08.', false); return; }
-
-  registroAtual = DADOS.find(r=>r.unidade===unidade && r.mes===mes && r.turno===turno);
-  if(!registroAtual){
-    registroAtual = {unidade, mes, turno, resumo:{}, colaboradores:[]};
-    DADOS.push(registroAtual);
-    info.textContent = 'Novo registro criado para esta unidade/mês/turno (nenhum colaborador cadastrado ainda — adicione abaixo).';
-  } else {
-    info.textContent = `${registroAtual.colaboradores.length} colaborador(es) cadastrados neste turno.`;
-  }
-
-  renderTabelaColabs(dia);
-  document.getElementById('epTabela').classList.remove('hidden');
-  document.getElementById('epAddColab').classList.remove('hidden');
-  document.getElementById('epSalvarWrap').classList.remove('hidden');
-});
-
-function renderTabelaColabs(dia){
-  const tbody = document.querySelector('#epTabela tbody');
-  tbody.innerHTML = registroAtual.colaboradores.map((c,i)=>{
-    const atual = c.dias?.[dia] || 'P';
-    return `<tr data-idx="${i}">
-      <td>${c.nome}</td><td>${c.cargo||''}</td>
-      <td><select class="status-sel">${Object.keys(STATUS).map(s=>`<option value="${s}" ${s===atual?'selected':''}>${s} — ${STATUS[s]}</option>`).join('')}</select></td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="3" style="color:var(--tx-muted)">Nenhum colaborador ainda — adicione abaixo.</td></tr>';
-}
-
-document.getElementById('btnAddColabLinha').addEventListener('click', ()=>{
-  const nome = document.getElementById('novoColabNome').value.trim();
-  const cargo = document.getElementById('novoColabCargo').value.trim();
-  if(!nome){ return; }
-  registroAtual.colaboradores.push({nome, cargo, turno: registroAtual.turno, dias:{}});
-  document.getElementById('novoColabNome').value=''; document.getElementById('novoColabCargo').value='';
-  renderTabelaColabs(document.getElementById('epDia').value.trim());
-});
-
-document.getElementById('btnSalvarEp').addEventListener('click', async ()=>{
-  const dia = document.getElementById('epDia').value.trim();
-  const linhas = [...document.querySelectorAll('#epTabela tbody tr[data-idx]')];
-  linhas.forEach(tr=>{
-    const idx = parseInt(tr.dataset.idx,10);
-    const status = tr.querySelector('.status-sel').value;
-    registroAtual.colaboradores[idx].dias = registroAtual.colaboradores[idx].dias || {};
-    registroAtual.colaboradores[idx].dias[dia] = status;
-  });
-
-  // recalcula o resumo (aggregate) do dia a partir dos status individuais
-  const total = registroAtual.colaboradores.length;
-  const presentes = registroAtual.colaboradores.filter(c=>c.dias[dia]==='P').length;
-  const fj = registroAtual.colaboradores.filter(c=>c.dias[dia]==='FJ').length;
-  const fi = registroAtual.colaboradores.filter(c=>c.dias[dia]==='FI' || c.dias[dia]==='AT').length;
-  registroAtual.resumo = registroAtual.resumo || {};
-  registroAtual.resumo[dia] = { data: dia, presentes, fj, fi, taxa: total ? Math.round(presentes/total*1000)/10 : 0 };
-
-  const msgEl = document.getElementById('epMsg');
-  const {error} = await sb.from('dashboard_dados').upsert({chave:'DADOS', payload: DADOS, updated_at: new Date().toISOString()}, {onConflict:'chave'});
-  if(error){ showMsg(msgEl, 'Erro ao salvar: '+error.message, false); return; }
-  showMsg(msgEl, 'Espelho salvo. O dashboard já reflete essa atualização.', true);
-});
-
-// ---------- DIMENSIONAMENTO ----------
-function renderDimTabela(){
-  const tbody = document.querySelector('#dimTabela tbody');
-  tbody.innerHTML = DIM_DADOS.map((d,i)=>`<tr data-idx="${i}">
-    <td>${d.u}</td><td>${d.c}</td>
-    <td><input type="number" min="0" class="dim-s" value="${d.s}"></td>
-    <td><input type="number" min="0" class="dim-r" value="${d.r}"></td>
-  </tr>`).join('');
-}
-
-document.getElementById('btnAddDimLinha').addEventListener('click', ()=>{
-  const u = document.getElementById('dimNovaUnidade').value;
-  const c = document.getElementById('dimNovoCargo').value.trim();
-  const s = parseInt(document.getElementById('dimNovoSolicitado').value||'0',10);
-  const r = parseInt(document.getElementById('dimNovoRealizado').value||'0',10);
-  if(!c){ return; }
-  DIM_DADOS.push({u, c, s, r});
-  document.getElementById('dimNovoCargo').value='';
-  document.getElementById('dimNovoSolicitado').value='';
-  document.getElementById('dimNovoRealizado').value='';
-  renderDimTabela();
-});
-
-document.getElementById('btnSalvarDim').addEventListener('click', async ()=>{
-  const linhas = [...document.querySelectorAll('#dimTabela tbody tr[data-idx]')];
-  linhas.forEach(tr=>{
-    const idx = parseInt(tr.dataset.idx,10);
-    DIM_DADOS[idx].s = parseInt(tr.querySelector('.dim-s').value||'0',10);
-    DIM_DADOS[idx].r = parseInt(tr.querySelector('.dim-r').value||'0',10);
-  });
-  const msgEl = document.getElementById('dimMsg');
-  const {error} = await sb.from('dashboard_dados').upsert({chave:'DIM_DADOS', payload: DIM_DADOS, updated_at: new Date().toISOString()}, {onConflict:'chave'});
-  if(error){ showMsg(msgEl, 'Erro ao salvar: '+error.message, false); return; }
-  showMsg(msgEl, 'Quadro de dimensionamento salvo. O dashboard já reflete essa atualização.', true);
-});
 
 // ---------- IMPORTAR ESPELHO DE PONTO (EzPoint .xlsx) ----------
 const MES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -455,48 +329,63 @@ document.getElementById('btnConfirmarEz').addEventListener('click', async ()=>{
   if(!EZ_PARSED){ return; }
   const unidade = document.getElementById('ezUnidade').value;
   const mes = EZ_PARSED.mes;
-  const turno = document.getElementById('ezTurno').value;
   if(!mes){ showMsg(msgEl,'Não detectei o mês do arquivo — não é possível salvar.',false); return; }
 
   const {data, error: readErr} = await sb.from('dashboard_dados').select('payload').eq('chave','DADOS').maybeSingle();
   if(readErr){ showMsg(msgEl,'Erro ao carregar dados atuais: '+readErr.message,false); return; }
   const DADOS = data?.payload || [];
 
-  let registro = DADOS.find(r => r.unidade===unidade && r.mes===mes && r.turno===turno);
-  if(!registro){
-    registro = {unidade, mes, turno, resumo:{}, colaboradores:[]};
-    DADOS.push(registro);
-  }
+  // O arquivo do EzPoint não informa o turno. Para cada colaborador (por matrícula),
+  // procura-se em qual turno ele já está cadastrado (normalmente vindo da importação
+  // da Planilha de Presença Diária, que informa o turno). Se ainda não existir em
+  // nenhum turno, ele entra num registro "A definir" até isso ser resolvido.
+  const diasTocadosPorRegistro = new Map();
 
-  const diasTocados = new Set();
   EZ_PARSED.empregados.forEach(emp => {
-    let colab = registro.colaboradores.find(c => c.matricula && c.matricula === emp.matricula);
-    if(!colab){
-      colab = {nome: emp.nome, cargo: emp.cargo, turno, matricula: emp.matricula, dias:{}};
-      registro.colaboradores.push(colab);
-    } else {
-      colab.nome = emp.nome; colab.cargo = emp.cargo;
+    let registro = null, colab = null;
+    if(emp.matricula){
+      for(const r of DADOS){
+        if(r.unidade===unidade && r.mes===mes){
+          const c = r.colaboradores.find(cc => cc.matricula && cc.matricula === emp.matricula);
+          if(c){ registro = r; colab = c; break; }
+        }
+      }
     }
+    if(!registro){
+      registro = DADOS.find(r => r.unidade===unidade && r.mes===mes && r.turno==='A definir');
+      if(!registro){ registro = {unidade, mes, turno:'A definir', resumo:{}, colaboradores:[]}; DADOS.push(registro); }
+      colab = registro.colaboradores.find(c => c.matricula && c.matricula === emp.matricula);
+      if(!colab){
+        colab = {nome: emp.nome, cargo: emp.cargo, turno: registro.turno, matricula: emp.matricula, dias:{}};
+        registro.colaboradores.push(colab);
+      }
+    }
+    colab.nome = emp.nome; colab.cargo = emp.cargo;
     Object.entries(emp.dias).forEach(([ddmm, status])=>{
       colab.dias[ddmm] = status;
-      diasTocados.add(ddmm);
+      if(!diasTocadosPorRegistro.has(registro)) diasTocadosPorRegistro.set(registro, new Set());
+      diasTocadosPorRegistro.get(registro).add(ddmm);
     });
   });
 
-  const totalColab = registro.colaboradores.length;
-  diasTocados.forEach(ddmm => {
-    const presentes = registro.colaboradores.filter(c=>c.dias[ddmm]==='P').length;
-    const fj = registro.colaboradores.filter(c=>c.dias[ddmm]==='FJ').length;
-    const fi = registro.colaboradores.filter(c=>c.dias[ddmm]==='FI' || c.dias[ddmm]==='AT').length;
-    registro.resumo[ddmm] = {data: ddmm, presentes, fj, fi, taxa: totalColab ? Math.round(presentes/totalColab*1000)/10 : 0};
+  diasTocadosPorRegistro.forEach((dias, registro)=>{
+    const totalColab = registro.colaboradores.length;
+    dias.forEach(ddmm => {
+      const presentes = registro.colaboradores.filter(c=>c.dias[ddmm]==='P').length;
+      const fj = registro.colaboradores.filter(c=>c.dias[ddmm]==='FJ').length;
+      const fi = registro.colaboradores.filter(c=>c.dias[ddmm]==='FI' || c.dias[ddmm]==='AT').length;
+      registro.resumo[ddmm] = {data: ddmm, presentes, fj, fi, taxa: totalColab ? Math.round(presentes/totalColab*1000)/10 : 0};
+    });
   });
 
   const {error: saveErr} = await sb.from('dashboard_dados').upsert({chave:'DADOS', payload: DADOS, updated_at: new Date().toISOString()}, {onConflict:'chave'});
   if(saveErr){ showMsg(msgEl,'Erro ao salvar: '+saveErr.message,false); return; }
 
-  showMsg(msgEl, `Importado: ${EZ_PARSED.empregados.length} colaborador(es), ${diasTocados.size} dia(s). Dashboard atualizado.`, true);
+  const naoDefinidos = [...diasTocadosPorRegistro.keys()].filter(r=>r.turno==='A definir').length;
+  showMsg(msgEl, `Importado: ${EZ_PARSED.empregados.length} colaborador(es).${naoDefinidos ? ' Alguns entraram como turno "A definir" — importe a Presença Diária desse mês para resolver automaticamente.' : ''} Dashboard atualizado.`, true);
   document.getElementById('ezPreview').classList.add('hidden');
   document.getElementById('ezFile').value = '';
+  document.getElementById('ezFileName').textContent = '';
   EZ_PARSED = null;
 });
 
@@ -663,6 +552,7 @@ document.getElementById('btnConfirmarPd').addEventListener('click', async ()=>{
   showMsg(msgEl, `Importado com sucesso: ${PD_PARSED.length} aba(s) de turno.`, true);
   document.getElementById('pdPreview').classList.add('hidden');
   document.getElementById('pdFile').value='';
+  document.getElementById('pdFileName').textContent='';
   PD_PARSED = null;
 });
 
@@ -720,6 +610,7 @@ document.getElementById('btnConfirmarDimFile').addEventListener('click', async (
   showMsg(msgEl, `Quadro de dimensionamento substituído: ${DIMFILE_PARSED.length} linha(s).`, true);
   document.getElementById('dimFilePreview').classList.add('hidden');
   document.getElementById('dimFile').value='';
+  document.getElementById('dimFileName').textContent='';
   DIMFILE_PARSED = null;
 });
 
