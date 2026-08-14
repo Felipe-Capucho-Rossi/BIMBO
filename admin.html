@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Painel RH · Bimbo · Fastlog</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
   --blue:#0079C2; --blue-dark:#005A9E; --indigo:#1E3A6E;
@@ -63,6 +64,64 @@ td select,td input{padding:5px 6px;font-size:12.5px}
   </div>
 
   <div id="painel" class="hidden">
+
+    <div class="card">
+      <h2>Importar Controle de Contratações (Dimensionamento Geral)</h2>
+      <p style="color:var(--tx2);font-size:12.5px;margin-bottom:12px">Planilha "CONTROLE DE CONTRATAÇÕES", aba "DIMENSIONAMENTO GERAL ATUALIZAD" — cobre todas as unidades de uma vez. Substitui o quadro de dimensionamento inteiro pelos números atuais dessa planilha.</p>
+      <div class="row">
+        <div><label>Arquivo (.xlsx)</label><input type="file" id="dimFile" accept=".xlsx"></div>
+      </div>
+      <button class="btn" id="btnProcessarDimFile">Processar arquivo</button>
+      <div id="dimFileMsg"></div>
+      <div id="dimFilePreview" class="hidden" style="margin-top:16px">
+        <table><thead><tr><th class="tal">Unidade</th><th class="tal">Cargo</th><th>Solicitado</th><th>Contratado</th></tr></thead>
+          <tbody id="dimFileTbody"></tbody>
+        </table>
+        <div style="margin-top:14px"><button class="btn" id="btnConfirmarDimFile">Confirmar e substituir quadro de dimensionamento</button></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Importar Controle de Presença Diária</h2>
+      <p style="color:var(--tx2);font-size:12.5px;margin-bottom:12px">Planilha "Controle de Presença Diária" (uma aba por turno, ex: "Bimbo Sorocaba - 2º Turno"). Detecta unidade, turno e mês automaticamente — já vem com o status de cada dia classificado (Presença/Folga/Feriado/Férias/FJ/FI/Desligado).</p>
+      <div class="row">
+        <div><label>Arquivo (.xlsx)</label><input type="file" id="pdFile" accept=".xlsx"></div>
+      </div>
+      <button class="btn" id="btnProcessarPd">Processar arquivo</button>
+      <div id="pdMsg"></div>
+      <div id="pdPreview" class="hidden" style="margin-top:16px">
+        <table><thead><tr><th class="tal">Aba (unidade / turno detectado)</th><th>Mês</th><th>Colaboradores</th><th>Desligamentos encontrados</th></tr></thead>
+          <tbody id="pdTbody"></tbody>
+        </table>
+        <div style="margin-top:14px"><button class="btn" id="btnConfirmarPd">Confirmar e salvar no dashboard</button></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Importar Espelho de Ponto (arquivo EzPoint)</h2>
+      <p style="color:var(--tx2);font-size:12.5px;margin-bottom:12px">Envie o .xlsx exportado do EzPoint (uma aba por colaborador). O sistema detecta a unidade e o mês automaticamente — confirme antes de salvar.</p>
+      <div class="row">
+        <div><label>Arquivo (.xlsx)</label><input type="file" id="ezFile" accept=".xlsx"></div>
+        <div><label>Turno (o arquivo não informa)</label><select id="ezTurno">
+          <option>1º Turno</option><option>2º Turno</option><option>3º Turno</option><option>ADM</option>
+        </select></div>
+      </div>
+      <button class="btn" id="btnProcessarEz">Processar arquivo</button>
+      <div id="ezMsg"></div>
+
+      <div id="ezPreview" class="hidden" style="margin-top:16px">
+        <div class="row">
+          <div><label>Unidade detectada</label><select id="ezUnidade"></select></div>
+          <div><label>Mês detectado</label><input id="ezMes" readonly></div>
+        </div>
+        <table id="ezTabela">
+          <thead><tr><th>Colaborador</th><th>Cargo</th><th>Matrícula</th><th>Dias no arquivo</th><th>Para revisar</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p style="font-size:11.5px;color:var(--tx2);margin-top:10px">"Para revisar" = dias sem ponto e sem observação reconhecida (não foi possível inferir presença/falta automaticamente). Esses dias entram como está — corrija depois em "Lançar Espelho de Ponto" se necessário.</p>
+        <div style="margin-top:14px"><button class="btn" id="btnConfirmarEz">Confirmar e salvar no dashboard</button></div>
+      </div>
+    </div>
 
     <div class="card">
       <h2>Lançar Espelho de Ponto</h2>
@@ -130,7 +189,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const UNIDS = ["ANHANGUERA PRIMÁRIA","ANHANGUERA SECUNDÁRIA","BANDEIRANTES","GRU","MOGI","RAPOSO","SANTO ANDRÉ","SBC","SOROCABA","VALINHOS"];
 const MESES = ["Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-const STATUS = { P:"Presença", FOLGA:"Folga", FJ:"Falta Justificada", FI:"Falta Injustificada", AT:"Atestado", FER:"Feriado", D:"Desligado", INT:"Integração" };
+const STATUS = { P:"Presença", FOLGA:"Folga", FJ:"Falta Justificada", FI:"Falta Injustificada", AT:"Atestado", FER:"Feriado", FERIAS:"Férias", D:"Desligado", INT:"Integração" };
 
 let DADOS = null, DIM_DADOS = null;
 
@@ -275,6 +334,393 @@ document.getElementById('btnSalvarDim').addEventListener('click', async ()=>{
   const {error} = await sb.from('dashboard_dados').upsert({chave:'DIM_DADOS', payload: DIM_DADOS, updated_at: new Date().toISOString()}, {onConflict:'chave'});
   if(error){ showMsg(msgEl, 'Erro ao salvar: '+error.message, false); return; }
   showMsg(msgEl, 'Quadro de dimensionamento salvo. O dashboard já reflete essa atualização.', true);
+});
+
+// ---------- IMPORTAR ESPELHO DE PONTO (EzPoint .xlsx) ----------
+const MES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function normalizaTxt(s){
+  return (s||'').toString().normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim();
+}
+
+const UNIDADE_ALIASES = {
+  'GRU': 'GRU',
+  'GUARULHOS': 'GRU',
+  'SBC': 'SBC',
+  'SAO BERNARDO DO CAMPO': 'SBC',
+  'SAO BERNARDO': 'SBC',
+};
+
+function detectaUnidade(setorTxt){
+  const n = normalizaTxt(setorTxt);
+  const direto = UNIDS.find(u => n.includes(normalizaTxt(u)));
+  if(direto) return direto;
+  for(const [chave, valor] of Object.entries(UNIDADE_ALIASES)){
+    if(n.includes(normalizaTxt(chave))) return valor;
+  }
+  return '';
+}
+
+function inferStatus(obsTxt, temPonto){
+  const o = normalizaTxt(obsTxt);
+  if(!o) return temPonto ? 'P' : 'REVISAR';
+  if(o.includes('FOLGA')) return 'FOLGA';
+  if(o.includes('FERIADO')) return 'FER';
+  if(o.includes('ATESTADO')) return 'AT';
+  if(o.includes('FALTA INJUSTIFICADA') || o.includes('FALTA')) return 'FI';
+  if(o.includes('DECLARA') || o.includes('ABON')) return 'FJ';
+  if(o.includes('DEMITID') || o.includes('DESLIGAD')) return 'D';
+  // observações como "Saida Antecipada", horários soltos etc: se teve ponto, é presença
+  return temPonto ? 'P' : 'REVISAR';
+}
+
+function parseEspelhoSheet(ws){
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:''});
+  const getCampo = (rotulo) => {
+    const r = rows.find(row => (row[0]||'').toString().trim() === rotulo);
+    return r ? (r[1]||'').toString().trim() : '';
+  };
+  const nome = getCampo('Nome:');
+  const cargo = getCampo('Cargo:');
+  const setor = getCampo('Setor:');
+  const matricula = getCampo('Matrícula:');
+  const periodoRow = rows.find(r => (r[0]||'').toString().trim() === 'Período:');
+  const periodo = periodoRow ? (periodoRow[1]||'').toString().trim() : '';
+  const mIni = periodo.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  const mesNum = mIni ? parseInt(mIni[2],10) : null;
+  const mesNome = mesNum ? MES_PT[mesNum-1] : '';
+
+  const headerIdx = rows.findIndex(r => (r[0]||'').toString().trim() === 'Data');
+  const dias = {};
+  const revisar = [];
+  let diasNoArquivo = 0;
+  if(headerIdx >= 0){
+    const header = rows[headerIdx];
+    const pontoIdx = header.map((h,i)=> (h||'').toString().startsWith('Ponto') ? i : -1).filter(i=>i>=0);
+    // as ultimas 8 colunas sao sempre CH,HT,HE50,HE100,HnEn,AT,FA,HN
+    const totalCols = header.length;
+    const chIdx = totalCols - 8;
+    const gapStart = pontoIdx.length ? Math.max(...pontoIdx)+1 : 1;
+    for(let i=headerIdx+1; i<rows.length; i++){
+      const row = rows[i];
+      const dataTxt = (row[0]||'').toString().trim();
+      if(!dataTxt) break;
+      const md = dataTxt.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+      if(!md) continue;
+      const ddmm = `${md[1]}/${md[2]}`;
+      const temPonto = pontoIdx.some(idx => (row[idx]||'').toString().trim() !== '');
+      let obs = '';
+      for(let g=gapStart; g<chIdx; g++){ if((row[g]||'').toString().trim()){ obs = row[g]; break; } }
+      const status = inferStatus(obs, temPonto);
+      dias[ddmm] = status;
+      diasNoArquivo++;
+      if(status === 'REVISAR') revisar.push(ddmm);
+    }
+  }
+  return {nome, cargo, setor, matricula, mesNome, dias, diasNoArquivo, revisar};
+}
+
+let EZ_PARSED = null;
+
+document.getElementById('btnProcessarEz').addEventListener('click', async ()=>{
+  const msgEl = document.getElementById('ezMsg');
+  const fileInput = document.getElementById('ezFile');
+  if(!fileInput.files.length){ showMsg(msgEl,'Selecione o arquivo .xlsx primeiro.',false); return; }
+  const file = fileInput.files[0];
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, {type:'array'});
+
+  const empregados = wb.SheetNames.map(name => parseEspelhoSheet(wb.Sheets[name])).filter(e => e.nome);
+  if(!empregados.length){ showMsg(msgEl,'Não consegui reconhecer nenhum colaborador nesse arquivo.',false); return; }
+
+  const unidadeDetectada = detectaUnidade(empregados[0].setor);
+  const mesDetectado = empregados[0].mesNome;
+
+  EZ_PARSED = {empregados, unidade: unidadeDetectada, mes: mesDetectado};
+
+  document.getElementById('ezUnidade').innerHTML = UNIDS.map(u=>`<option value="${u}" ${u===unidadeDetectada?'selected':''}>${u}</option>`).join('');
+  document.getElementById('ezMes').value = mesDetectado || '(não detectado)';
+
+  document.querySelector('#ezTabela tbody').innerHTML = empregados.map(e => `<tr>
+    <td class="tal">${e.nome}</td><td>${e.cargo}</td><td>${e.matricula}</td>
+    <td>${e.diasNoArquivo}</td><td>${e.revisar.length ? e.revisar.length+' dia(s): '+e.revisar.join(', ') : '—'}</td>
+  </tr>`).join('');
+
+  document.getElementById('ezPreview').classList.remove('hidden');
+  showMsg(msgEl, `${empregados.length} colaborador(es) lidos do arquivo. Confira a unidade/mês abaixo antes de salvar.`, true);
+});
+
+document.getElementById('btnConfirmarEz').addEventListener('click', async ()=>{
+  const msgEl = document.getElementById('ezMsg');
+  if(!EZ_PARSED){ return; }
+  const unidade = document.getElementById('ezUnidade').value;
+  const mes = EZ_PARSED.mes;
+  const turno = document.getElementById('ezTurno').value;
+  if(!mes){ showMsg(msgEl,'Não detectei o mês do arquivo — não é possível salvar.',false); return; }
+
+  const {data, error: readErr} = await sb.from('dashboard_dados').select('payload').eq('chave','DADOS').maybeSingle();
+  if(readErr){ showMsg(msgEl,'Erro ao carregar dados atuais: '+readErr.message,false); return; }
+  const DADOS = data?.payload || [];
+
+  let registro = DADOS.find(r => r.unidade===unidade && r.mes===mes && r.turno===turno);
+  if(!registro){
+    registro = {unidade, mes, turno, resumo:{}, colaboradores:[]};
+    DADOS.push(registro);
+  }
+
+  const diasTocados = new Set();
+  EZ_PARSED.empregados.forEach(emp => {
+    let colab = registro.colaboradores.find(c => c.matricula && c.matricula === emp.matricula);
+    if(!colab){
+      colab = {nome: emp.nome, cargo: emp.cargo, turno, matricula: emp.matricula, dias:{}};
+      registro.colaboradores.push(colab);
+    } else {
+      colab.nome = emp.nome; colab.cargo = emp.cargo;
+    }
+    Object.entries(emp.dias).forEach(([ddmm, status])=>{
+      colab.dias[ddmm] = status;
+      diasTocados.add(ddmm);
+    });
+  });
+
+  const totalColab = registro.colaboradores.length;
+  diasTocados.forEach(ddmm => {
+    const presentes = registro.colaboradores.filter(c=>c.dias[ddmm]==='P').length;
+    const fj = registro.colaboradores.filter(c=>c.dias[ddmm]==='FJ').length;
+    const fi = registro.colaboradores.filter(c=>c.dias[ddmm]==='FI' || c.dias[ddmm]==='AT').length;
+    registro.resumo[ddmm] = {data: ddmm, presentes, fj, fi, taxa: totalColab ? Math.round(presentes/totalColab*1000)/10 : 0};
+  });
+
+  const {error: saveErr} = await sb.from('dashboard_dados').upsert({chave:'DADOS', payload: DADOS, updated_at: new Date().toISOString()}, {onConflict:'chave'});
+  if(saveErr){ showMsg(msgEl,'Erro ao salvar: '+saveErr.message,false); return; }
+
+  showMsg(msgEl, `Importado: ${EZ_PARSED.empregados.length} colaborador(es), ${diasTocados.size} dia(s). Dashboard atualizado.`, true);
+  document.getElementById('ezPreview').classList.add('hidden');
+  document.getElementById('ezFile').value = '';
+  EZ_PARSED = null;
+});
+
+// ---------- IMPORTAR CONTROLE DE PRESENÇA DIÁRIA ----------
+function mapValorParaStatus(v){
+  if(v === 1 || v === '1' || v === 1.0) return 'P';
+  const o = normalizaTxt(v);
+  if(!o) return 'REVISAR';
+  if(o.includes('FOLGA')) return 'FOLGA';
+  if(o.includes('FERIADO')) return 'FER';
+  if(o.includes('FERIAS') || o.includes('FÉRIAS')) return 'FERIAS';
+  if(o === 'FJ' || o.includes('JUSTIFICADA')) return 'FJ';
+  if(o === 'FI' || o.includes('INJUSTIFICADA')) return 'FI';
+  if(o === 'D' || o.includes('DESLIGAD') || o.includes('DEMITID')) return 'D';
+  if(o === 'AT' || o.includes('ATESTADO')) return 'AT';
+  if(o.includes('INTEGRA')) return 'INT';
+  return 'REVISAR';
+}
+
+function achaColIndice(header, textoExato){
+  return header.findIndex(h => (h||'').toString().trim().toUpperCase() === textoExato.toUpperCase());
+}
+
+function parsePresencaDiariaSheet(ws, sheetName){
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
+  const titulo = (rows[0] && rows[0][5]) ? rows[0][5].toString() : '';
+  const mesNome = MES_PT.find(m => normalizaTxt(titulo).includes(normalizaTxt(m))) || '';
+
+  const partes = sheetName.split(' - ');
+  const unidadeTxt = (partes[0]||'').replace(/bimbo/i,'').trim();
+  const turnoTxt = (partes[1] || '').trim();
+  const unidade = detectaUnidade(unidadeTxt) || detectaUnidade(sheetName);
+  let turno = 'ADM';
+  if(/1/.test(turnoTxt)) turno = '1º Turno';
+  else if(/2/.test(turnoTxt)) turno = '2º Turno';
+  else if(/3/.test(turnoTxt)) turno = '3º Turno';
+
+  const headerIdx = rows.findIndex(r => r.some(c => (c||'').toString().trim().toUpperCase()==='NOME'));
+  const colaboradores = [];
+  if(headerIdx < 0) return {unidade, turno, mesNome, sheetName, colaboradores, desligamentos:[]};
+
+  const header = rows[headerIdx];
+  const idxMat = achaColIndice(header,'MAT FAST');
+  const idxNome = achaColIndice(header,'NOME');
+  const idxCargo = achaColIndice(header,'CARGO');
+  const dateCols = [];
+  header.forEach((h,i)=>{ if(h instanceof Date) dateCols.push(i); });
+
+  for(let i=headerIdx+1; i<rows.length; i++){
+    const row = rows[i];
+    const nome = row[idxNome];
+    if(!nome) break;
+    const cargo = idxCargo>=0 ? (row[idxCargo]||'').toString().trim() : '';
+    const matricula = idxMat>=0 && row[idxMat]!=='' ? row[idxMat].toString().trim() : '';
+    const dias = {};
+    dateCols.forEach(ci => {
+      const d = header[ci];
+      const ddmm = String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+      dias[ddmm] = mapValorParaStatus(row[ci]);
+    });
+    colaboradores.push({nome: nome.toString().trim(), cargo, matricula, dias});
+  }
+
+  // bloco de desligamentos/contratacoes (tabela auxiliar em outra linha/coluna da mesma aba)
+  const desligHeaderIdx = rows.findIndex(r => r.some(c => (c||'').toString().trim() === 'Nome do colaborador'));
+  const desligamentos = [];
+  if(desligHeaderIdx >= 0){
+    const desligHeader = rows[desligHeaderIdx];
+    const idxDesligNome = achaColIndice(desligHeader,'Nome do colaborador');
+    const idxData = achaColIndice(desligHeader,'Data do desligamento');
+    const idxMotivo = achaColIndice(desligHeader,'Motivo desligamento');
+    const idxSubst = achaColIndice(desligHeader,'Nome do substituto');
+    const idxAdm = achaColIndice(desligHeader,'Data de admissão');
+    const idxInteg = achaColIndice(desligHeader,'Data da integração');
+    const idxObs = achaColIndice(desligHeader,'Observação');
+    for(let i=desligHeaderIdx+1; i<rows.length; i++){
+      const row = rows[i];
+      const nome = row[idxDesligNome];
+      if(!nome) break;
+      const fmtData = v => (v instanceof Date) ? `${String(v.getDate()).padStart(2,'0')}/${String(v.getMonth()+1).padStart(2,'0')}/${v.getFullYear()}` : (v||'');
+      desligamentos.push({
+        nome_desligado: nome.toString().trim(),
+        data_desligamento: fmtData(row[idxData]),
+        motivo: (row[idxMotivo]||'').toString(),
+        nome_substituto: (row[idxSubst]||'').toString(),
+        data_admissao: fmtData(row[idxAdm]),
+        data_integracao: fmtData(row[idxInteg]),
+        observacao: (row[idxObs]||'').toString(),
+      });
+    }
+  }
+  return {unidade, turno, mesNome, sheetName, colaboradores, desligamentos};
+}
+
+let PD_PARSED = null;
+
+document.getElementById('btnProcessarPd').addEventListener('click', async ()=>{
+  const msgEl = document.getElementById('pdMsg');
+  const fileInput = document.getElementById('pdFile');
+  if(!fileInput.files.length){ showMsg(msgEl,'Selecione o arquivo .xlsx primeiro.',false); return; }
+  const buf = await fileInput.files[0].arrayBuffer();
+  const wb = XLSX.read(buf, {type:'array', cellDates:true});
+
+  const abas = wb.SheetNames.map(name => parsePresencaDiariaSheet(wb.Sheets[name], name))
+    .filter(a => a.colaboradores.length || a.desligamentos.length);
+
+  if(!abas.length){ showMsg(msgEl,'Não consegui reconhecer nenhuma aba de turno nesse arquivo.',false); return; }
+
+  PD_PARSED = abas;
+  document.getElementById('pdTbody').innerHTML = abas.map(a => `<tr>
+    <td class="tal">${a.sheetName} → ${a.unidade||'<b style="color:var(--red)">não reconhecida</b>'} / ${a.turno}</td>
+    <td>${a.mesNome||'<b style="color:var(--red)">?</b>'}</td>
+    <td>${a.colaboradores.length}</td>
+    <td>${a.desligamentos.length}</td>
+  </tr>`).join('');
+  document.getElementById('pdPreview').classList.remove('hidden');
+  showMsg(msgEl, `${abas.length} aba(s) lida(s). Confira se a unidade foi reconhecida antes de salvar.`, true);
+});
+
+document.getElementById('btnConfirmarPd').addEventListener('click', async ()=>{
+  const msgEl = document.getElementById('pdMsg');
+  if(!PD_PARSED) return;
+  const invalidas = PD_PARSED.filter(a=>!a.unidade || !a.mesNome);
+  if(invalidas.length){ showMsg(msgEl, `${invalidas.length} aba(s) sem unidade ou mês reconhecidos — corrija o arquivo ou me avise para eu ajustar a detecção.`, false); return; }
+
+  const {data, error: readErr} = await sb.from('dashboard_dados').select('payload').eq('chave','DADOS').maybeSingle();
+  if(readErr){ showMsg(msgEl,'Erro ao carregar dados atuais: '+readErr.message,false); return; }
+  const DADOS = data?.payload || [];
+
+  const {data: pdata, error: readErr2} = await sb.from('dashboard_dados').select('payload').eq('chave','PRESENCA_DADOS').maybeSingle();
+  const PRESENCA_DADOS = pdata?.payload || [];
+
+  PD_PARSED.forEach(aba => {
+    let registro = DADOS.find(r => r.unidade===aba.unidade && r.mes===aba.mesNome && r.turno===aba.turno);
+    if(!registro){ registro = {unidade:aba.unidade, mes:aba.mesNome, turno:aba.turno, resumo:{}, colaboradores:[]}; DADOS.push(registro); }
+
+    const diasTocados = new Set();
+    aba.colaboradores.forEach(emp => {
+      let colab = registro.colaboradores.find(c => c.matricula && c.matricula === emp.matricula);
+      if(!colab){ colab = {nome: emp.nome, cargo: emp.cargo, turno: aba.turno, matricula: emp.matricula, dias:{}}; registro.colaboradores.push(colab); }
+      else { colab.nome = emp.nome; colab.cargo = emp.cargo; }
+      Object.entries(emp.dias).forEach(([ddmm,status])=>{ colab.dias[ddmm]=status; diasTocados.add(ddmm); });
+    });
+
+    const totalColab = registro.colaboradores.length;
+    diasTocados.forEach(ddmm=>{
+      const presentes = registro.colaboradores.filter(c=>c.dias[ddmm]==='P').length;
+      const fj = registro.colaboradores.filter(c=>c.dias[ddmm]==='FJ').length;
+      const fi = registro.colaboradores.filter(c=>c.dias[ddmm]==='FI'||c.dias[ddmm]==='AT').length;
+      registro.resumo[ddmm] = {data:ddmm, presentes, fj, fi, taxa: totalColab ? Math.round(presentes/totalColab*1000)/10 : 0};
+    });
+
+    if(aba.desligamentos.length){
+      let pReg = PRESENCA_DADOS.find(r => r.unidade===aba.unidade && r.mes===aba.mesNome);
+      if(!pReg){ pReg = {unidade:aba.unidade, mes:aba.mesNome, quadro:{cargos:{},dim_total:0}, totais_mes:{}, desligamentos:[]}; PRESENCA_DADOS.push(pReg); }
+      pReg.desligamentos = aba.desligamentos;
+    }
+  });
+
+  const {error: e1} = await sb.from('dashboard_dados').upsert({chave:'DADOS', payload: DADOS, updated_at: new Date().toISOString()}, {onConflict:'chave'});
+  const {error: e2} = await sb.from('dashboard_dados').upsert({chave:'PRESENCA_DADOS', payload: PRESENCA_DADOS, updated_at: new Date().toISOString()}, {onConflict:'chave'});
+  if(e1 || e2){ showMsg(msgEl, 'Erro ao salvar: '+((e1&&e1.message)||(e2&&e2.message)), false); return; }
+
+  showMsg(msgEl, `Importado com sucesso: ${PD_PARSED.length} aba(s) de turno.`, true);
+  document.getElementById('pdPreview').classList.add('hidden');
+  document.getElementById('pdFile').value='';
+  PD_PARSED = null;
+});
+
+// ---------- IMPORTAR CONTROLE DE CONTRATAÇÕES (DIMENSIONAMENTO GERAL) ----------
+function parseDimensionamentoGeral(ws){
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
+  const headerIdx = rows.findIndex(r => r.some(c => (c||'').toString().trim().toUpperCase()==='UNIDADE'));
+  if(headerIdx < 0) return [];
+  const header = rows[headerIdx];
+  const idxU = achaColIndice(header,'UNIDADE');
+  const idxC = achaColIndice(header,'CARGO');
+  const idxS = achaColIndice(header,'Quantidade Total de vagas solicitadas');
+  const idxR = achaColIndice(header,'QUANTIDADE CONTRATAÇÕES');
+
+  const linhas = [];
+  let unidadeAtual = '';
+  for(let i=headerIdx+1; i<rows.length; i++){
+    const row = rows[i];
+    const isBlank = row.every(c => c==='' || c===null || c===undefined);
+    if(isBlank) break;
+    if(row[idxU]) unidadeAtual = row[idxU].toString().trim();
+    const cargo = idxC>=0 ? (row[idxC]||'').toString().trim() : '';
+    if(!cargo) continue;
+    const u = detectaUnidade(unidadeAtual) || unidadeAtual;
+    linhas.push({u, c: cargo, s: Number(row[idxS])||0, r: Number(row[idxR])||0});
+  }
+  return linhas;
+}
+
+let DIMFILE_PARSED = null;
+
+document.getElementById('btnProcessarDimFile').addEventListener('click', async ()=>{
+  const msgEl = document.getElementById('dimFileMsg');
+  const fileInput = document.getElementById('dimFile');
+  if(!fileInput.files.length){ showMsg(msgEl,'Selecione o arquivo .xlsx primeiro.',false); return; }
+  const buf = await fileInput.files[0].arrayBuffer();
+  const wb = XLSX.read(buf, {type:'array', cellDates:true});
+  const abaAlvo = wb.SheetNames.find(n => normalizaTxt(n).includes('DIMENSIONAMENTO')) || wb.SheetNames[0];
+  const linhas = parseDimensionamentoGeral(wb.Sheets[abaAlvo]);
+  if(!linhas.length){ showMsg(msgEl,'Não consegui reconhecer linhas de dimensionamento nessa planilha.',false); return; }
+
+  DIMFILE_PARSED = linhas;
+  document.getElementById('dimFileTbody').innerHTML = linhas.map(l=>`<tr>
+    <td class="tal">${l.u}</td><td class="tal">${l.c}</td><td>${l.s}</td><td>${l.r}</td>
+  </tr>`).join('');
+  document.getElementById('dimFilePreview').classList.remove('hidden');
+  showMsg(msgEl, `${linhas.length} linha(s) lida(s) da planilha.`, true);
+});
+
+document.getElementById('btnConfirmarDimFile').addEventListener('click', async ()=>{
+  const msgEl = document.getElementById('dimFileMsg');
+  if(!DIMFILE_PARSED) return;
+  const {error} = await sb.from('dashboard_dados').upsert({chave:'DIM_DADOS', payload: DIMFILE_PARSED, updated_at: new Date().toISOString()}, {onConflict:'chave'});
+  if(error){ showMsg(msgEl,'Erro ao salvar: '+error.message,false); return; }
+  showMsg(msgEl, `Quadro de dimensionamento substituído: ${DIMFILE_PARSED.length} linha(s).`, true);
+  document.getElementById('dimFilePreview').classList.add('hidden');
+  document.getElementById('dimFile').value='';
+  DIMFILE_PARSED = null;
 });
 
 checarSessao();
