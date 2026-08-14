@@ -6,6 +6,7 @@
 <title>Painel RH · Bimbo · Fastlog</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root{
   --blue:#0079C2; --blue-dark:#005A9E; --indigo:#1E3A6E;
@@ -124,10 +125,10 @@ td select,td input{padding:5px 6px;font-size:12.5px}
       <p style="color:var(--tx2);font-size:12.5px;margin-bottom:12px">Envie o .xlsx exportado do EzPoint (uma aba por colaborador). O sistema detecta a unidade e o mês automaticamente. O turno é identificado casando a matrícula com quem já foi importado pela Planilha de Presença Diária; se ainda não houver correspondência, o colaborador entra como "A definir" até a Presença Diária daquele mês ser importada.</p>
 
       <div class="dropzone" id="ezDropzone">
-        <input type="file" id="ezFile" accept=".xlsx" class="hidden">
+        <input type="file" id="ezFile" accept=".xlsx,.xls,.pdf" class="hidden">
         <div class="dropzone-icon">⬆</div>
-        <div class="dropzone-text">Arraste o arquivo .xlsx aqui, ou <span class="dropzone-link">clique para escolher</span></div>
-        <div class="dropzone-hint">Aceita .xlsx</div>
+        <div class="dropzone-text">Arraste o arquivo aqui, ou <span class="dropzone-link">clique para escolher</span></div>
+        <div class="dropzone-hint">Aceita .xlsx, .xls ou .pdf</div>
         <div class="dropzone-filename" id="ezFileName"></div>
       </div>
 
@@ -159,12 +160,22 @@ const SUPABASE_URL = 'https://fiasqvmkwvadcbzsytel.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpYXNxdm1rd3ZhZGNienN5dGVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MTM5MTAsImV4cCI6MjEwMjI4OTkxMH0.1j78E0318wzllqMD5Zo9yjqWuD9oxn-YB2681j3BAfA';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
 const UNIDS = ["ANHANGUERA PRIMÁRIA","ANHANGUERA SECUNDÁRIA","BANDEIRANTES","GRU","MOGI","RAPOSO","SANTO ANDRÉ","SBC","SOROCABA","VALINHOS"];
 
 function showMsg(el, texto, ok){ el.innerHTML = `<div class="msg ${ok?'ok':'err'}">${texto}</div>`; setTimeout(()=>el.innerHTML='',5000); }
 
 // ---------- ARRASTAR E SOLTAR ARQUIVOS ----------
-function setupDropzone(zoneId, inputId, nameId, previewId, aoLimpar){
+const EXT_XLSX = ['.xlsx'];
+const EXT_ESPELHO = ['.xlsx', '.xls', '.pdf'];
+
+function extensaoValida(nome, extensoes){
+  const n = (nome||'').trim().toLowerCase();
+  return extensoes.some(ext => n.endsWith(ext));
+}
+
+function setupDropzone(zoneId, inputId, nameId, previewId, aoLimpar, msgId, extensoesAceitas){
   const zone = document.getElementById(zoneId);
   const input = document.getElementById(inputId);
   const nameEl = document.getElementById(nameId);
@@ -178,8 +189,14 @@ function setupDropzone(zoneId, inputId, nameId, previewId, aoLimpar){
 
   function mostraArquivo(){
     if(!input.files.length){ nameEl.innerHTML = ''; return; }
-    const nome = input.files[0].name;
-    nameEl.innerHTML = `📄 ${nome} <a href="#" class="remove-file">✕ remover</a>`;
+    const arquivo = input.files[0];
+    if(!extensaoValida(arquivo.name, extensoesAceitas)){
+      input.value = '';
+      nameEl.innerHTML = '';
+      if(msgId) showMsg(document.getElementById(msgId), `"${arquivo.name}" não é um formato aceito aqui (${extensoesAceitas.join(', ')}).`, false);
+      return;
+    }
+    nameEl.innerHTML = `📄 ${arquivo.name} <a href="#" class="remove-file">✕ remover</a>`;
     nameEl.querySelector('.remove-file').addEventListener('click', e=>{
       e.preventDefault(); e.stopPropagation(); limpar();
     });
@@ -206,9 +223,9 @@ function setupDropzone(zoneId, inputId, nameId, previewId, aoLimpar){
     }
   });
 }
-setupDropzone('dimDropzone','dimFile','dimFileName','dimFilePreview', ()=>{ DIMFILE_PARSED = null; document.getElementById('dimFileMsg').innerHTML=''; });
-setupDropzone('pdDropzone','pdFile','pdFileName','pdPreview', ()=>{ PD_PARSED = null; document.getElementById('pdMsg').innerHTML=''; });
-setupDropzone('ezDropzone','ezFile','ezFileName','ezPreview', ()=>{ EZ_PARSED = null; document.getElementById('ezMsg').innerHTML=''; });
+setupDropzone('dimDropzone','dimFile','dimFileName','dimFilePreview', ()=>{ DIMFILE_PARSED = null; document.getElementById('dimFileMsg').innerHTML=''; }, 'dimFileMsg', EXT_XLSX);
+setupDropzone('pdDropzone','pdFile','pdFileName','pdPreview', ()=>{ PD_PARSED = null; document.getElementById('pdMsg').innerHTML=''; }, 'pdMsg', EXT_XLSX);
+setupDropzone('ezDropzone','ezFile','ezFileName','ezPreview', ()=>{ EZ_PARSED = null; document.getElementById('ezMsg').innerHTML=''; }, 'ezMsg', EXT_ESPELHO);
 
 // ---------- AUTENTICAÇÃO ----------
 async function checarSessao(){
@@ -258,7 +275,7 @@ function inferStatus(obsTxt, temPonto){
   const o = normalizaTxt(obsTxt);
   if(!o) return temPonto ? 'P' : 'REVISAR';
   if(o.includes('FOLGA')) return 'FOLGA';
-  if(o.includes('FERIADO')) return 'FER';
+  if(o.includes('FERIADO') || /\bFER\b/.test(o)) return 'FER';
   if(o.includes('ATESTADO')) return 'AT';
   if(o.includes('FALTA INJUSTIFICADA') || o.includes('FALTA')) return 'FI';
   if(o.includes('DECLARA') || o.includes('ABON')) return 'FJ';
@@ -313,17 +330,106 @@ function parseEspelhoSheet(ws){
   return {nome, cargo, setor, matricula, mesNome, dias, diasNoArquivo, revisar};
 }
 
+// ---------- LEITURA DO ESPELHO DE PONTO EM PDF ----------
+// Reconstrói o texto do PDF linha a linha (agrupando pelo eixo Y de cada
+// trecho de texto) para poder aplicar a mesma lógica de leitura usada no
+// .xlsx. Cada página do PDF corresponde a um colaborador.
+async function extraiPaginasPDF(buf){
+  const pdf = await pdfjsLib.getDocument({data: new Uint8Array(buf)}).promise;
+  const paginas = [];
+  for(let n=1; n<=pdf.numPages; n++){
+    const page = await pdf.getPage(n);
+    const content = await page.getTextContent();
+    const itens = content.items
+      .map(it => ({str: it.str, x: it.transform[4], y: it.transform[5]}))
+      .filter(it => it.str.trim() !== '');
+    itens.sort((a,b) => b.y - a.y || a.x - b.x);
+
+    const linhas = [];
+    let atual = [];
+    let yAtual = null;
+    const TOL = 2.5;
+    itens.forEach(it => {
+      if(yAtual === null || Math.abs(it.y - yAtual) <= TOL){
+        atual.push(it);
+        if(yAtual === null) yAtual = it.y;
+      } else {
+        atual.sort((a,b)=>a.x-b.x);
+        linhas.push(atual.map(i=>i.str).join(' ').replace(/\s+/g,' ').trim());
+        atual = [it];
+        yAtual = it.y;
+      }
+    });
+    if(atual.length){
+      atual.sort((a,b)=>a.x-b.x);
+      linhas.push(atual.map(i=>i.str).join(' ').replace(/\s+/g,' ').trim());
+    }
+    paginas.push(linhas.filter(l => l));
+  }
+  return paginas;
+}
+
+function parseEspelhoPaginaPDF(linhas){
+  const acha = regex => { const l = linhas.find(l => regex.test(l)); return l || ''; };
+
+  const nome = (acha(/^Nome:/i).match(/^Nome:\s*(.+)$/i) || [])[1] || '';
+  const cargoLinha = acha(/^Cargo:/i);
+  const cargo = (cargoLinha.match(/^Cargo:\s*(.+?)\s+Depart\.:/i) || [])[1] || '';
+  const setor = (cargoLinha.match(/Depart\.:\s*(.+)$/i) || [])[1] || '';
+  const matricula = (acha(/Matr[ií]cula:/i).match(/Matr[ií]cula:\s*(\S+)/i) || [])[1] || '';
+  const periodo = acha(/^Per[ií]odo:/i);
+  const mIni = periodo.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  const mesNum = mIni ? parseInt(mIni[2],10) : null;
+  const mesNome = mesNum ? MES_PT[mesNum-1] : '';
+
+  const headerIdx = linhas.findIndex(l => /^Data\s+Pontos/i.test(l));
+  const dias = {};
+  const revisar = [];
+  let diasNoArquivo = 0;
+  let obsBuffer = [];
+
+  const inicio = headerIdx >= 0 ? headerIdx+1 : linhas.length;
+  for(let i=inicio; i<linhas.length; i++){
+    const l = linhas[i];
+    if(/^\(\*\)/.test(l) || /^_{5,}/.test(l) || /^Atraso\s*\(AT\)/i.test(l)) break;
+    if(/^[\d%\s]+$/.test(l)) continue; // sub-cabeçalho tipo "50% 100%"
+
+    const md = l.match(/^(\d{2})\/(\d{2})\s+(.*)$/);
+    if(!md){
+      obsBuffer.push(l);
+      continue;
+    }
+    const ddmm = `${md[1]}/${md[2]}`;
+    const resto = md[3] || '';
+    const temPonto = /\d{1,2}:\d{2}/.test(resto);
+    const obs = (obsBuffer.join(' ') + ' ' + resto).trim();
+    const status = inferStatus(obs, temPonto);
+    dias[ddmm] = status;
+    diasNoArquivo++;
+    if(status === 'REVISAR') revisar.push(ddmm);
+    obsBuffer = [];
+  }
+  return {nome, cargo, setor, matricula, mesNome, dias, diasNoArquivo, revisar};
+}
+
 let EZ_PARSED = null;
 
 document.getElementById('btnProcessarEz').addEventListener('click', async ()=>{
   const msgEl = document.getElementById('ezMsg');
   const fileInput = document.getElementById('ezFile');
-  if(!fileInput.files.length){ showMsg(msgEl,'Selecione o arquivo .xlsx primeiro.',false); return; }
+  if(!fileInput.files.length){ showMsg(msgEl,'Selecione o arquivo primeiro (.xlsx, .xls ou .pdf).',false); return; }
+  if(!extensaoValida(fileInput.files[0].name, EXT_ESPELHO)){ showMsg(msgEl,'Formato não aceito — envie .xlsx, .xls ou .pdf.',false); return; }
   const file = fileInput.files[0];
   const buf = await file.arrayBuffer();
-  const wb = XLSX.read(buf, {type:'array'});
 
-  const empregados = wb.SheetNames.map(name => parseEspelhoSheet(wb.Sheets[name])).filter(e => e.nome);
+  let empregados;
+  if(/\.pdf$/i.test(file.name)){
+    const paginas = await extraiPaginasPDF(buf);
+    empregados = paginas.map(linhas => parseEspelhoPaginaPDF(linhas)).filter(e => e.nome);
+  } else {
+    const wb = XLSX.read(buf, {type:'array'});
+    empregados = wb.SheetNames.map(name => parseEspelhoSheet(wb.Sheets[name])).filter(e => e.nome);
+  }
   if(!empregados.length){ showMsg(msgEl,'Não consegui reconhecer nenhum colaborador nesse arquivo.',false); return; }
 
   const unidadeDetectada = detectaUnidade(empregados[0].setor);
@@ -528,6 +634,7 @@ document.getElementById('btnProcessarPd').addEventListener('click', async ()=>{
   const msgEl = document.getElementById('pdMsg');
   const fileInput = document.getElementById('pdFile');
   if(!fileInput.files.length){ showMsg(msgEl,'Selecione o arquivo .xlsx primeiro.',false); return; }
+  if(!extensaoValida(fileInput.files[0].name, EXT_XLSX)){ showMsg(msgEl,'Esse arquivo não é um .xlsx — selecione a planilha correta.',false); return; }
   const nomeArquivo = fileInput.files[0].name;
   const buf = await fileInput.files[0].arrayBuffer();
   const wb = XLSX.read(buf, {type:'array', cellDates:true});
@@ -631,6 +738,7 @@ document.getElementById('btnProcessarDimFile').addEventListener('click', async (
   const msgEl = document.getElementById('dimFileMsg');
   const fileInput = document.getElementById('dimFile');
   if(!fileInput.files.length){ showMsg(msgEl,'Selecione o arquivo .xlsx primeiro.',false); return; }
+  if(!extensaoValida(fileInput.files[0].name, EXT_XLSX)){ showMsg(msgEl,'Esse arquivo não é um .xlsx — selecione a planilha correta.',false); return; }
   const buf = await fileInput.files[0].arrayBuffer();
   const wb = XLSX.read(buf, {type:'array', cellDates:true});
   const abaAlvo = wb.SheetNames.find(n => normalizaTxt(n).includes('DIMENSIONAMENTO')) || wb.SheetNames[0];
