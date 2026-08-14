@@ -411,8 +411,6 @@ function achaColIndice(header, textoExato){
 
 function parsePresencaDiariaSheet(ws, sheetName){
   const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
-  const titulo = (rows[0] && rows[0][5]) ? rows[0][5].toString() : '';
-  const mesNome = MES_PT.find(m => normalizaTxt(titulo).includes(normalizaTxt(m))) || '';
 
   const partes = sheetName.split(' - ');
   const unidadeTxt = (partes[0]||'').replace(/bimbo/i,'').trim();
@@ -425,7 +423,7 @@ function parsePresencaDiariaSheet(ws, sheetName){
 
   const headerIdx = rows.findIndex(r => r.some(c => (c||'').toString().trim().toUpperCase()==='NOME'));
   const colaboradores = [];
-  if(headerIdx < 0) return {unidade, turno, mesNome, sheetName, colaboradores, desligamentos:[]};
+  if(headerIdx < 0) return {unidade, turno, mesNome:'', sheetName, colaboradores, desligamentos:[]};
 
   const header = rows[headerIdx];
   const idxMat = achaColIndice(header,'MAT FAST');
@@ -433,6 +431,29 @@ function parsePresencaDiariaSheet(ws, sheetName){
   const idxCargo = achaColIndice(header,'CARGO');
   const dateCols = [];
   header.forEach((h,i)=>{ if(h instanceof Date) dateCols.push(i); });
+
+  // O mês vem da própria linha de datas dos dias (a mesma linha usada para os
+  // status diários) — é mais confiável do que procurar um texto de título, cuja
+  // posição varia entre unidades.
+  let mesNome = '';
+  if(dateCols.length){
+    const contagem = {};
+    dateCols.forEach(ci => {
+      const m = header[ci].getMonth();
+      contagem[m] = (contagem[m]||0) + 1;
+    });
+    const mesMaisComum = Object.entries(contagem).sort((a,b)=>b[1]-a[1])[0][0];
+    mesNome = MES_PT[parseInt(mesMaisComum,10)];
+  }
+  if(!mesNome){
+    // recurso extra: procura o nome do mês em qualquer célula das primeiras linhas
+    for(let i=0; i<Math.min(rows.length, 8) && !mesNome; i++){
+      for(const cell of rows[i]){
+        const achado = MES_PT.find(m => normalizaTxt(cell).includes(normalizaTxt(m)));
+        if(achado){ mesNome = achado; break; }
+      }
+    }
+  }
 
   for(let i=headerIdx+1; i<rows.length; i++){
     const row = rows[i];
