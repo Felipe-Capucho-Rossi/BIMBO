@@ -536,11 +536,11 @@ document.getElementById('btnConfirmarEz').addEventListener('click', async ()=>{
       if(!registro){ registro = {unidade, mes, turno:'A definir', resumo:{}, colaboradores:[]}; DADOS.push(registro); }
       colab = registro.colaboradores.find(c => c.matricula && c.matricula === emp.matricula);
       if(!colab){
-        colab = {nome: emp.nome, cargo: emp.cargo, turno: registro.turno, matricula: emp.matricula, dias:{}};
+        colab = {nome: emp.nome, cargo: emp.cargo, setor: emp.setor, turno: registro.turno, matricula: emp.matricula, dias:{}};
         registro.colaboradores.push(colab);
       }
     }
-    colab.nome = emp.nome; colab.cargo = emp.cargo;
+    colab.nome = emp.nome; colab.cargo = emp.cargo; if(emp.setor) colab.setor = emp.setor;
     Object.entries(emp.dias).forEach(([ddmm, status])=>{
       colab.dias[ddmm] = status;
       if(!diasTocadosPorRegistro.has(registro)) diasTocadosPorRegistro.set(registro, new Set());
