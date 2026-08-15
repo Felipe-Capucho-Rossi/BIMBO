@@ -305,13 +305,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
   border-right:1px solid var(--border-light);white-space:nowrap;font-size:11.5px;line-height:15px;height:15px;box-sizing:content-box}
 .tgrade-frozen th:first-child{min-width:130px;max-width:170px;text-align:left}
 .tgrade-frozen th:nth-child(2){min-width:120px;max-width:170px;text-align:center}
-.tgrade-frozen th:nth-child(3){min-width:70px;max-width:110px;text-align:center}
-.tgrade-frozen th:nth-child(4){min-width:60px;max-width:90px;text-align:center}
+.tgrade-frozen th:nth-child(3){min-width:90px;max-width:130px;text-align:center}
+.tgrade-frozen th:nth-child(4){min-width:70px;max-width:110px;text-align:center}
+.tgrade-frozen th:nth-child(5){min-width:60px;max-width:90px;text-align:center}
 .tgrade-frozen td{overflow:hidden;text-overflow:ellipsis;background:#fff;font-weight:600}
 .tgrade-frozen td:first-child{min-width:130px;max-width:170px;color:var(--tx-primary);text-align:left}
 .tgrade-frozen td:nth-child(2){min-width:120px;max-width:170px;color:var(--indigo);font-weight:700;text-align:center}
-.tgrade-frozen td:nth-child(3){min-width:70px;max-width:110px;color:var(--tx-muted);text-align:center}
-.tgrade-frozen td:nth-child(4){min-width:60px;max-width:90px;color:var(--blue);text-align:center}
+.tgrade-frozen td:nth-child(3){min-width:90px;max-width:130px;color:var(--tx-muted);text-align:center}
+.tgrade-frozen td:nth-child(4){min-width:70px;max-width:110px;color:var(--tx-muted);text-align:center}
+.tgrade-frozen td:nth-child(5){min-width:60px;max-width:90px;color:var(--blue);text-align:center}
 .tgrade tr:nth-child(even){background:#F8FAFC}
 .tgrade tr:hover td{background:#EEF5FF!important}
 .tgrade tr.tgroup-header td{background:var(--indigo)!important;color:#fff!important;font-weight:800;
@@ -354,6 +356,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .tgrade tr td.gt-tot.gtv-fj{background:#fff!important;color:#ED7D31!important}
 .tgrade tr td.gt-tot.gtv-fi{background:#fff!important;color:#ED0000!important}
 .tgrade tr td.gt-tot.gtv-flg{background:#fff!important;color:#000!important}
+.tgrade tr td.gt-tot.gtc-he50,.tgrade tr th.gt-tot.gtc-he50{background:#9900FF!important;color:#fff!important}
+.tgrade tr td.gt-tot.gtc-he100,.tgrade tr th.gt-tot.gtc-he100{background:#6A00B3!important;color:#fff!important}
+.tgrade tr td.gt-tot.gtc-hetot,.tgrade tr th.gt-tot.gtc-hetot{background:#4B0082!important;color:#fff!important}
+.tgrade tr td.gt-tot.gtv-he{background:#fff!important;color:#9900FF!important}
 
 /* ── Formatação condicional: colunas de fim de semana (sáb/dom) ── */
 .tgrade th.th-weekend{background:#64748B}
@@ -1300,17 +1306,17 @@ function render(){
       return{label:`${d}, ${WD_ABBR[wd]}`,weekend:wd===0||wd===6};
     };
     const diasInfo=diasOrdem.map(diaInfo);
-    const totalScrollCols=diasOrdem.length+4;
+    const totalScrollCols=diasOrdem.length+7;
     const cR=(p,fj,fi)=>{const t=p+fj+fi;return t>0?Math.round(p/t*1000)/10:null;};
 
-    const r6f=`<tr class="tr-res"><td colspan="4" class="r-fer" style="text-align:right;padding-right:8px">Feriado</td></tr>`;
-    const rFeriasF=`<tr class="tr-res"><td colspan="4" class="r-ferias" style="text-align:right;padding-right:8px">Férias</td></tr>`;
-    const r5f=`<tr class="tr-res"><td colspan="4" class="r-flg" style="text-align:right;padding-right:8px">Folga</td></tr>`;
-    const r7f=`<tr class="tr-res"><td colspan="4" class="r-d" style="text-align:right;padding-right:8px">Desligado</td></tr>`;
-    const r3f=`<tr class="tr-res"><td colspan="4" class="r-fi" style="text-align:right;padding-right:8px">Falta Injustificada (FI)</td></tr>`;
-    const r2f=`<tr class="tr-res"><td colspan="4" class="r-fj" style="text-align:right;padding-right:8px">Falta Justificada (FJ)</td></tr>`;
-    const r1f=`<tr class="tr-res"><td colspan="4" class="r-p" style="text-align:right;padding-right:8px">Presença</td></tr>`;
-    const r4f=`<tr class="tr-res"><td colspan="4" style="text-align:right;padding-right:8px;background:#fff!important;color:var(--indigo)!important">% de Presença</td></tr>`;
+    const r6f=`<tr class="tr-res"><td colspan="5" class="r-fer" style="text-align:right;padding-right:8px">Feriado</td></tr>`;
+    const rFeriasF=`<tr class="tr-res"><td colspan="5" class="r-ferias" style="text-align:right;padding-right:8px">Férias</td></tr>`;
+    const r5f=`<tr class="tr-res"><td colspan="5" class="r-flg" style="text-align:right;padding-right:8px">Folga</td></tr>`;
+    const r7f=`<tr class="tr-res"><td colspan="5" class="r-d" style="text-align:right;padding-right:8px">Desligado</td></tr>`;
+    const r3f=`<tr class="tr-res"><td colspan="5" class="r-fi" style="text-align:right;padding-right:8px">Falta Injustificada (FI)</td></tr>`;
+    const r2f=`<tr class="tr-res"><td colspan="5" class="r-fj" style="text-align:right;padding-right:8px">Falta Justificada (FJ)</td></tr>`;
+    const r1f=`<tr class="tr-res"><td colspan="5" class="r-p" style="text-align:right;padding-right:8px">Presença</td></tr>`;
+    const r4f=`<tr class="tr-res"><td colspan="5" style="text-align:right;padding-right:8px;background:#fff!important;color:var(--indigo)!important">% de Presença</td></tr>`;
     const labelRowsFrozen=r6f+rFeriasF+r5f+r7f+r3f+r2f+r1f+r4f;
 
     function buildValueRows(arr,tot){
@@ -1327,14 +1333,16 @@ function render(){
         r1+=`<td class="r-p">${arr.p[di]}</td>`;
         r4+=`<td class="r-tx">${tx!=null?tx+"%":""}</td>`;
       });
-      r6+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
-      rFerias+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
-      r5+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot${tot.flg>0?" gtv-flg":""}">${tot.flg}</td></tr>`;
-      r7+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
-      r3+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot${tot.fi>0?" gtv-fi":""}">${tot.fi}</td><td class="gt-tot">—</td></tr>`;
-      r2+=`<td class="gt-tot">—</td><td class="gt-tot${tot.fj>0?" gtv-fj":""}">${tot.fj}</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
-      r1+=`<td class="gt-tot${tot.p>0?" gtv-p":""}">${tot.p}</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td></tr>`;
-      r4+=`<td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td></tr>`;
+      const heDash="<td class=\"gt-tot\">—</td><td class=\"gt-tot\">—</td><td class=\"gt-tot\">—</td>";
+      const heIndigo="<td class=\"gt-tot\" style=\"background:var(--indigo)!important\"></td><td class=\"gt-tot\" style=\"background:var(--indigo)!important\"></td><td class=\"gt-tot\" style=\"background:var(--indigo)!important\"></td>";
+      r6+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td>${heDash}</tr>`;
+      rFerias+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td>${heDash}</tr>`;
+      r5+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot${tot.flg>0?" gtv-flg":""}">${tot.flg}</td>${heDash}</tr>`;
+      r7+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td>${heDash}</tr>`;
+      r3+=`<td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot${tot.fi>0?" gtv-fi":""}">${tot.fi}</td><td class="gt-tot">—</td>${heDash}</tr>`;
+      r2+=`<td class="gt-tot">—</td><td class="gt-tot${tot.fj>0?" gtv-fj":""}">${tot.fj}</td><td class="gt-tot">—</td><td class="gt-tot">—</td>${heDash}</tr>`;
+      r1+=`<td class="gt-tot${tot.p>0?" gtv-p":""}">${tot.p}</td><td class="gt-tot">—</td><td class="gt-tot">—</td><td class="gt-tot">—</td>${heDash}</tr>`;
+      r4+=`<td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td><td class="gt-tot" style="background:var(--indigo)!important"></td>${heIndigo}</tr>`;
       return r6+rFerias+r5+r7+r3+r2+r1+r4;
     }
 
@@ -1343,7 +1351,7 @@ function render(){
       const colab=b.colaboradores.filter(cc=>!f.c||cc.cargo===f.c);
       if(!colab.length)return;
       const groupLabel=`${b.unidade} — ${b.turno} — ${b.mes}`;
-      gRowsFrozen+=`<tr class="tgroup-header"><td colspan="4">${groupLabel}</td></tr>`;
+      gRowsFrozen+=`<tr class="tgroup-header"><td colspan="5">${groupLabel}</td></tr>`;
       gRows+=`<tr class="tgroup-header"><td colspan="${totalScrollCols}"></td></tr>`;
 
       const arr={p:[],fj:[],fi:[],flg:[],fer:[],d:[],ferias:[]};
@@ -1352,7 +1360,7 @@ function render(){
       let empFrozen="",empScroll="";
       colab.forEach(col=>{
         empFrozen+=`<tr><td title="${col.nome}">${col.nome.length>18?col.nome.substring(0,16)+"…":col.nome}</td>`;
-        empFrozen+=`<td title="${b.unidade}">${b.unidade}</td><td title="${col.cargo}">${col.cargo}</td><td title="${col.turno}">${col.turno}</td></tr>`;
+        empFrozen+=`<td title="${b.unidade}">${b.unidade}</td><td title="${col.setor||""}">${col.setor||"—"}</td><td title="${col.cargo}">${col.cargo}</td><td title="${col.turno}">${col.turno}</td></tr>`;
         empScroll+="<tr>";
         let cP=0,cFJ=0,cFI=0,cFLG=0;
         diasOrdem.forEach((d,di)=>{
@@ -1376,7 +1384,10 @@ function render(){
           empScroll+=`<td class="${(tdCls+otCls).trim()}"${titleAttr}><span class="${cls}">${lbl}</span></td>`;
         });
         bTotP+=cP;bTotFJ+=cFJ;bTotFI+=cFI;bTotFLG+=cFLG;
-        empScroll+=`<td class="gt-tot${cP>0?" gtv-p":""}">${cP}</td><td class="gt-tot${cFJ>0?" gtv-fj":""}">${cFJ||"—"}</td><td class="gt-tot${cFI>0?" gtv-fi":""}">${cFI||"—"}</td><td class="gt-tot${cFLG>0?" gtv-flg":""}">${cFLG||"—"}</td>`;
+        let cHE50=0,cHE100=0;
+        Object.values(col.horasExtras||{}).forEach(h=>{cHE50+=h.he50||0;cHE100+=h.he100||0;});
+        const cHETot=cHE50+cHE100;
+        empScroll+=`<td class="gt-tot${cP>0?" gtv-p":""}">${cP}</td><td class="gt-tot${cFJ>0?" gtv-fj":""}">${cFJ||"—"}</td><td class="gt-tot${cFI>0?" gtv-fi":""}">${cFI||"—"}</td><td class="gt-tot${cFLG>0?" gtv-flg":""}">${cFLG||"—"}</td><td class="gt-tot${cHE50>0?" gtv-he":""}">${cHE50>0?fmtHoras(cHE50):"—"}</td><td class="gt-tot${cHE100>0?" gtv-he":""}">${cHE100>0?fmtHoras(cHE100):"—"}</td><td class="gt-tot${cHETot>0?" gtv-he":""}">${cHETot>0?fmtHoras(cHETot):"—"}</td>`;
         empScroll+="</tr>";
       });
 
@@ -1405,8 +1416,8 @@ function render(){
         const extraCls=otAgg[diasOrdem[di]]?` ${otAgg[diasOrdem[di]]}`:"";
         return `<th class="${(info.weekend?"th-weekend":"")+extraCls}" title="${info.label}">${diasOrdem[di]}</th>`;
       }).join("");
-      gFrozenWrapper.innerHTML=`<table class="tgrade tgrade-frozen"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Cargo</th><th>Turno</th></tr></thead><tbody>${gRowsFrozen}</tbody></table>`;
-      gWrapper.innerHTML=`<table class="tgrade tgrade-scroll"><thead><tr>${thDs}<th class="gt-tot gtc-p">Total de Presenças no Mês</th><th class="gt-tot gtc-fj">Total de Faltas Justificadas no Mês</th><th class="gt-tot gtc-fi">Total de Faltas Injustificadas no Mês</th><th class="gt-tot gtc-flg">Total de Folgas no Mês</th></tr></thead><tbody>${gRows}</tbody></table>`;
+      gFrozenWrapper.innerHTML=`<table class="tgrade tgrade-frozen"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Setor</th><th>Cargo</th><th>Turno</th></tr></thead><tbody>${gRowsFrozen}</tbody></table>`;
+      gWrapper.innerHTML=`<table class="tgrade tgrade-scroll"><thead><tr>${thDs}<th class="gt-tot gtc-p">Total de Presenças no Mês</th><th class="gt-tot gtc-fj">Total de Faltas Justificadas no Mês</th><th class="gt-tot gtc-fi">Total de Faltas Injustificadas no Mês</th><th class="gt-tot gtc-flg">Total de Folgas no Mês</th><th class="gt-tot gtc-he50">HE 50% no Mês</th><th class="gt-tot gtc-he100">HE 100% no Mês</th><th class="gt-tot gtc-hetot">HE Total no Mês</th></tr></thead><tbody>${gRows}</tbody></table>`;
       gFrozenWrapper.scrollTop=0;
       /* Iguala a altura útil (viewport) do painel congelado à do painel
          rolável, já que o rolável pode ganhar uma barra de rolagem
