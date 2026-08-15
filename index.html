@@ -492,14 +492,14 @@ footer strong{color:var(--tx-secondary)}
 
   <div class="filter-bar">
     <div class="fg"><label>Unidade</label>
-      <select id="f-uni" onchange="render()"><option value="">Todas</option>
+      <select id="f-uni" onchange="render();syncFromMainFilter()"><option value="">Todas</option>
         <option>ANHANGUERA PRIMÁRIA</option><option>ANHANGUERA SECUNDÁRIA</option>
         <option>BANDEIRANTES</option><option>GRU</option><option>MOGI</option>
         <option>RAPOSO</option><option>SANTO ANDR&#201;</option>
         <option>SBC</option><option>SOROCABA</option><option>VALINHOS</option>
       </select></div>
     <div class="fg"><label>M&#234;s</label>
-      <select id="f-mes" onchange="render()"><option value="">Todos</option>
+      <select id="f-mes" onchange="render();syncFromMainFilter()"><option value="">Todos</option>
         <option>Mar&#231;o</option><option>Abril</option><option>Maio</option><option>Junho</option><option>Julho</option>
       </select></div>
     <div class="fg"><label>Turno</label>
@@ -507,7 +507,7 @@ footer strong{color:var(--tx-secondary)}
         <option>1&#186; Turno</option><option>2&#186; Turno</option><option>3&#186; Turno</option><option>ADM</option>
       </select></div>
     <div class="fg"><label>Cargo</label>
-      <select id="f-cargo" onchange="render()"><option value="">Todos</option>
+      <select id="f-cargo" onchange="render();syncFromMainFilter()"><option value="">Todos</option>
         <option>Aux. de Expedi&#231;&#227;o</option><option>L&#237;der Operacional</option>
         <option>Op. Empilhadeira</option><option>Manobrista</option>
         <option>Aux. Administrativo</option><option>Aux. Operacional</option>
@@ -542,16 +542,12 @@ footer strong{color:var(--tx-secondary)}
         <div class="fg"><label>Unidade</label>
           <select id="dim-f-uni" onchange="renderDim()"><option value="">Todas</option>
             <option>ANHANGUERA PRIMÁRIA</option><option>ANHANGUERA SECUNDÁRIA</option>
-            <option>BANDEIRANTES</option><option>GUARULHOS</option><option>MOGI PRIMÁRIA</option>
-            <option>RAPOSO PRIMÁRIA</option><option>RAPOSO SECUNDÁRIA</option>
-            <option>SANTO ANDRÉ</option><option>SÃO BERNARDO DO CAMPO</option>
-            <option>SOROCABA</option><option>VALINHOS</option>
+            <option>BANDEIRANTES</option><option>GRU</option><option>MOGI</option>
+            <option>RAPOSO</option><option>SANTO ANDR&#201;</option>
+            <option>SBC</option><option>SOROCABA</option><option>VALINHOS</option>
           </select></div>
         <div class="fg"><label>Cargo</label>
           <select id="dim-f-crg" onchange="renderDim()"><option value="">Todos</option>
-            <option>AUXILIAR DE EXPEDIÇÃO</option><option>AUXILIAR ADMINISTRATIVO</option>
-            <option>LÍDER DE EXPEDIÇÃO</option><option>MANOBRA</option>
-            <option>OPERADOR DE EMPILHADEIRA</option>
           </select></div>
         <div style="align-self:flex-end;margin-left:auto;font-size:11px;color:var(--tx-muted);font-style:italic" id="dim-filtro-label"></div>
       </div>
@@ -591,7 +587,7 @@ footer strong{color:var(--tx-secondary)}
         <div class="fg"><label>Unidade</label>
           <select id="pf-uni" onchange="renderPresenca()"><option value="">Todas</option>
             <option>ANHANGUERA PRIMÁRIA</option><option>ANHANGUERA SECUNDÁRIA</option>
-            <option>BANDEIRANTES</option><option>GUARULHOS</option><option>MOGI</option>
+            <option>BANDEIRANTES</option><option>GRU</option><option>MOGI</option>
             <option>RAPOSO</option><option>SANTO ANDRÉ</option><option>SBC</option>
             <option>SOROCABA</option><option>VALINHOS</option>
           </select></div>
@@ -1010,7 +1006,98 @@ function filtrar(f){
     return true;
   });
 }
-function clearF(){["f-uni","f-mes","f-turno","f-cargo"].forEach(id=>document.getElementById(id).value="");render();}
+function clearF(){["f-uni","f-mes","f-turno","f-cargo"].forEach(id=>document.getElementById(id).value="");render();syncFromMainFilter();}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INTEGRAÇÃO DOS FILTROS
+   Os selects de Unidade/Mês/Turno/Cargo eram fixos no HTML com valores de
+   exemplo (herdados do modelo original) que não batem com o texto real
+   vindo das planilhas — em especial Cargo, que é lido literalmente da
+   coluna "CARGO" de cada arquivo e varia de unidade para unidade. Um select
+   com opção "Aux. de Expedição" nunca casava com o valor real "Auxiliar de
+   Expedição" guardado nos dados, então escolher um cargo no filtro
+   principal zerava a tela inteira silenciosamente. O mesmo valia para as
+   Unidades do Dimensionamento ("GUARULHOS", "SÃO BERNARDO DO CAMPO" etc.,
+   que nunca existem nos dados — a unidade real é sempre "GRU"/"SBC") e para
+   o Cargo do Dimensionamento (opções em CAIXA ALTA vs. valor real em Title
+   Case). A correção definitiva é popular todos os selects dinamicamente a
+   partir dos dados carregados, e propagar a seleção da barra principal para
+   os filtros locais de Dimensionamento e de Presença. ═══════════════════ */
+const MESES_ORDEM=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function preencherSelect(id, valores, placeholder){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const atual=el.value;
+  el.innerHTML=`<option value="">${placeholder}</option>`+valores.map(v=>`<option${v===atual?' selected':''}>${v}</option>`).join('');
+}
+
+// Popula (ou repopula, a cada carga/atualização em tempo real) todos os
+// filtros — principal, Dimensionamento e Presença — com os valores que
+// realmente existem nos dados, na ordem canônica das unidades e cronológica
+// dos meses. Chamado sempre que DADOS/DIM_DADOS/PRESENCA_DADOS mudam.
+function popularFiltros(){
+  const unidsDados=new Set();
+  DADOS.forEach(b=>unidsDados.add(b.unidade));
+  DIM_DADOS.forEach(d=>unidsDados.add(d.u));
+  PRESENCA_DADOS.forEach(d=>unidsDados.add(d.unidade));
+  const unidsOrdenadas=UNIDS.filter(u=>unidsDados.has(u))
+    .concat([...unidsDados].filter(u=>!UNIDS.includes(u)).sort());
+
+  const mesesDados=new Set();
+  DADOS.forEach(b=>mesesDados.add(b.mes));
+  PRESENCA_DADOS.forEach(d=>mesesDados.add(d.mes));
+  const mesesOrdenados=MESES_ORDEM.filter(m=>mesesDados.has(m))
+    .concat([...mesesDados].filter(m=>!MESES_ORDEM.includes(m)).sort());
+
+  const turnosDados=[...new Set(DADOS.map(b=>b.turno))].sort();
+
+  const cargosDados=new Set();
+  DADOS.forEach(b=>b.colaboradores.forEach(c=>{ if(c.cargo) cargosDados.add(c.cargo); }));
+  const cargosOrdenados=[...cargosDados].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+
+  const cargosDim=[...new Set(DIM_DADOS.map(d=>d.c).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+
+  preencherSelect('f-uni', unidsOrdenadas, 'Todas');
+  preencherSelect('f-mes', mesesOrdenados, 'Todos');
+  preencherSelect('f-turno', turnosDados, 'Todos');
+  preencherSelect('f-cargo', cargosOrdenados, 'Todos');
+  preencherSelect('dim-f-uni', unidsOrdenadas, 'Todas');
+  preencherSelect('dim-f-crg', cargosDim, 'Todos');
+  preencherSelect('pf-uni', unidsOrdenadas, 'Todas');
+  preencherSelect('pf-mes', mesesOrdenados, 'Todos');
+}
+
+// Tenta casar um valor pelo texto exato e, se não achar (fontes diferentes
+// às vezes grafam o mesmo cargo de um jeito ligeiramente distinto), por
+// comparação sem acento/maiúsculas — mesma normalização usada no
+// cruzamento Presença × Dimensionamento (operNorm). Sem correspondência,
+// volta para "Todas/Todos" em vez de deixar um valor que não existe preso
+// no select (o que travaria o filtro local em zero resultados).
+function aplicaValorOuReseta(selId, valor){
+  const el=document.getElementById(selId);
+  if(!el) return;
+  if(!valor){ el.value=''; return; }
+  const opcoes=[...el.options].map(o=>o.value).filter(Boolean);
+  if(opcoes.includes(valor)){ el.value=valor; return; }
+  const alvo=operNorm(valor);
+  const achado=opcoes.find(o=>operNorm(o)===alvo);
+  el.value=achado||'';
+}
+
+// Propaga Unidade/Mês/Cargo da barra de filtro principal para os filtros
+// locais de Dimensionamento e de Presença (Turno não existe nessas seções).
+function syncFromMainFilter(){
+  const uMain=document.getElementById('f-uni').value;
+  const mMain=document.getElementById('f-mes').value;
+  const cMain=document.getElementById('f-cargo').value;
+  aplicaValorOuReseta('dim-f-uni', uMain);
+  aplicaValorOuReseta('pf-uni', uMain);
+  aplicaValorOuReseta('pf-mes', mMain);
+  aplicaValorOuReseta('dim-f-crg', cMain);
+  if(typeof renderDim==='function') renderDim();
+  if(typeof renderPresenca==='function') renderPresenca();
+}
 function cons(blocos){
   let P=0,fj=0,fi=0,tot=0,nm=new Set();
   blocos.forEach(b=>{Object.values(b.resumo).forEach(d=>{P+=d.presentes;fj+=d.fj;fi+=d.fi;});b.colaboradores.forEach(c=>nm.add(c.nome));});
@@ -1680,7 +1767,11 @@ document.getElementById("nav-kpi").classList.add("active");
 let DIM_DADOS;
 
 // ── helpers ──────────────────────────────────────────────────────────
-function dimPct(s, r){ return s > 0 ? Math.round(r/s*1000)/10 : 0; }
+// Quando não há solicitação (s=0) mas existe contratado (r>0), não é "0%
+// atendido" — é headcount contratado sem pedido do cliente (excesso). Sem
+// esse caso a divisão por zero cairia sempre em 0%, mostrando um selo
+// vermelho "0%" para uma linha que na prática está acima da meta.
+function dimPct(s, r){ if(s > 0) return Math.round(r/s*1000)/10; return r > 0 ? 100 : 0; }
 
 function dimBadge(s, r){
   const gap = r - s, pct = dimPct(s, r);
@@ -1761,8 +1852,6 @@ function renderDim(){
     porUnd[d.u].cargos.push(d);
   });
 
-  const maxValGlobal = Math.max(...dados.map(d=>Math.max(d.s,d.r)), 1);
-
   const cardsHtml = Object.entries(porUnd).map(([und, info])=>{
     const totUS = info.cargos.reduce((a,d)=>a+d.s,0);
     const totUR = info.cargos.reduce((a,d)=>a+d.r,0);
@@ -1772,8 +1861,14 @@ function renderDim(){
     const rowsHtml = info.cargos.map(d=>{
       const pct  = dimPct(d.s, d.r);
       const gap  = d.r - d.s;
-      const wS   = Math.round(d.s/maxValGlobal*100);
-      const wR   = Math.round(d.r/maxValGlobal*100);
+      // Escala LOCAL à própria linha (maior dos dois valores = 100% da barra):
+      // assim o comprimento das barras Solicitado × Contratado sempre reflete
+      // exatamente o % mostrado ao lado, em vez de ficar "esmagado" pela
+      // escala de um cargo muito maior em outra unidade (que pode nem estar
+      // visível na tela).
+      const rowMax = Math.max(d.s, d.r, 1);
+      const wS   = Math.round(d.s/rowMax*100);
+      const wR   = Math.round(d.r/rowMax*100);
       const corR = dimRowColor(pct);
       const cargoCurto = d.c
         .replace('AUXILIAR DE EXPEDIÇÃO','Aux. Expedição')
@@ -1972,6 +2067,7 @@ async function carregarDadosSupabase(){
   DADOS = mapa.DADOS || [];
   DIM_DADOS = mapa.DIM_DADOS || [];
   PRESENCA_DADOS = mapa.PRESENCA_DADOS || [];
+  popularFiltros();
   render();
   renderDim();
   renderPresenca();
