@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
-  --sidebar-w:220px; --sidebar-w-col:60px; --topbar-h:56px;
+  --sidebar-w:268px; --sidebar-w-col:60px; --topbar-h:56px;
   --bg:#F0F2F5; --card:#FFF; --border:#DDE2EA; --border-light:#EAECF0;
   --blue:#0079C2; --blue-dark:#005A9E; --blue-light:#E6F2FA;
   --indigo:#1E3A6E; --indigo-mid:#2D5099;
@@ -41,15 +41,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
   letter-spacing:1.2px;padding:14px 20px 6px;white-space:nowrap;overflow:hidden;
   opacity:1;transition:opacity .2s}
 .sidebar.col .sb-sec{opacity:0}
-.sb-item{display:flex;align-items:center;gap:11px;padding:9px 18px;cursor:pointer;
-  color:var(--sb-text);font-size:13px;font-weight:500;transition:all .15s;
-  border-left:3px solid transparent;white-space:nowrap;text-decoration:none;
-  user-select:none}
+.sb-item{display:flex;align-items:center;gap:11px;padding:8px 16px;cursor:pointer;
+  color:var(--sb-text);font-size:12.5px;font-weight:500;transition:all .15s;
+  border-left:3px solid transparent;text-decoration:none;
+  user-select:none;min-height:34px}
 .sb-item:hover{background:var(--sb-hover);color:var(--sb-text-act)}
 .sb-item.active{background:rgba(0,121,194,.18);color:var(--sb-text-act);border-left-color:var(--sb-active)}
+.sb-item.disabled{opacity:.42;cursor:not-allowed}
+.sb-item.disabled:hover{background:transparent;color:var(--sb-text)}
+.sb-item.disabled:hover svg{opacity:.7}
 .sb-item svg{width:17px;height:17px;flex-shrink:0;opacity:.7;transition:opacity .15s}
 .sb-item.active svg,.sb-item:hover svg{opacity:1}
-.sb-item-txt{overflow:hidden;white-space:nowrap;opacity:1;transition:opacity .2s}
+.sb-item-txt{white-space:normal;line-height:1.28;opacity:1;transition:opacity .2s}
 .sidebar.col .sb-item-txt{opacity:0;pointer-events:none}
 .sb-toggle{padding:13px 18px;border-top:1px solid rgba(255,255,255,.08);cursor:pointer;
   color:var(--sb-text);display:flex;align-items:center;gap:10px;font-size:12px;
@@ -361,35 +364,60 @@ footer strong{color:var(--tx-secondary)}
     <img src="data:image/jpeg;base64,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" alt="Fastlog">
   </div>
   <nav class="sb-nav">
-    <div class="sb-sec">Operação</div>
-    <div class="sb-item" id="nav-kpi" onclick="navTo('sec-kpi',0)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      <span class="sb-item-txt">Visão Geral</span>
+    <div class="sb-sec">Produção</div>
+    <div class="sb-item disabled" title="Sem fonte de dados disponível">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-6 3 4 4-7"/></svg>
+      <span class="sb-item-txt">Resultado Operacional</span>
     </div>
-    <div class="sb-item" id="nav-graficos" onclick="navTo('sec-graficos',1)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      <span class="sb-item-txt">Gráficos</span>
+    <div class="sb-item disabled" title="Sem fonte de dados disponível">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="16" y="3" width="4" height="17"/></svg>
+      <span class="sb-item-txt">Controle de Produtividade</span>
     </div>
-    <div class="sb-item" id="nav-dimensionamento" onclick="navTo('sec-dimensionamento',2)">
+    <div class="sb-item disabled" title="Sem fonte de dados disponível">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0116 0v1"/></svg>
+      <span class="sb-item-txt">Produtividade Individual</span>
+    </div>
+    <div class="sb-item" id="nav-dimensionamento" onclick="navTo('sec-dimensionamento',0)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h12M3 18h8"/><rect x="15" y="10" width="6" height="10" rx="1" fill="currentColor" opacity=".3"/><rect x="19" y="6" width="2" height="14" rx="1" fill="currentColor" opacity=".5"/></svg>
       <span class="sb-item-txt">Dimensionamento</span>
     </div>
-        <div class="sb-item" id="nav-evolucao" onclick="navTo('sec-evolucao',3)">
+    <div class="sb-sec">Presença &amp; Absenteísmo</div>
+    <div class="sb-item" id="nav-kpi" onclick="navTo('sec-kpi',1)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span class="sb-item-txt">Visão Geral</span>
+    </div>
+    <div class="sb-item" id="nav-grade" onclick="navTo('sec-grade',2)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+      <span class="sb-item-txt">Controle de Presença Diária do RH</span>
+    </div>
+    <div class="sb-item" id="nav-operacional" onclick="navTo('sec-operacional',3)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M7 15h4M7 18h7"/></svg>
+      <span class="sb-item-txt">Controle de Presença Diária Operacional</span>
+    </div>
+    <div class="sb-item" id="nav-graficos" onclick="navTo('sec-graficos',4)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span class="sb-item-txt">Gráficos</span>
+    </div>
+    <div class="sb-item" id="nav-evolucao" onclick="navTo('sec-evolucao',5)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
       <span class="sb-item-txt">Evolução</span>
     </div>
-    <div class="sb-sec">Controle</div>
-    <div class="sb-item" id="nav-presenca" onclick="navTo('sec-presenca',4)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
-      <span class="sb-item-txt">Presença Diária</span>
+    <div class="sb-item" id="nav-presenca" onclick="navTo('sec-presenca',6)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3v4M8 3v4M3 9h18"/><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M9 14l2 2 4-4"/></svg>
+      <span class="sb-item-txt">Movimentações</span>
     </div>
-        <div class="sb-item" id="nav-grade" onclick="navTo('sec-grade',5)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
-      <span class="sb-item-txt">Grade Diária</span>
-    </div>
-    <div class="sb-item" id="nav-resumo" onclick="navTo('sec-resumo',6)">
+    <div class="sb-item" id="nav-resumo" onclick="navTo('sec-resumo',7)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
       <span class="sb-item-txt">Resumo</span>
+    </div>
+    <div class="sb-sec">Gestão &amp; Custos</div>
+    <div class="sb-item disabled" title="Sem fonte de dados disponível">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg>
+      <span class="sb-item-txt">Radar de Contratos</span>
+    </div>
+    <div class="sb-item" id="nav-he" onclick="navTo('sec-he',8)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      <span class="sb-item-txt">Hora Extra</span>
     </div>
   </nav>
   <div class="sb-toggle" onclick="toggleSb()">
@@ -439,12 +467,6 @@ footer strong{color:var(--tx-secondary)}
   <div class="content">
 
     <!-- KPIs -->
-    <div id="sec-kpi" style="scroll-margin-top:130px">
-      <div class="sec-head"><span class="sec-title">Indicadores Gerais</span><div class="sec-line"></div></div>
-      <div class="kpi-grid" id="kpi-row"></div>
-    </div>
-
-    <!-- ══ DIMENSIONAMENTO vs PRESENÇA REAL ══ -->
     <div id="sec-dimensionamento" style="scroll-margin-top:130px">
       <div class="sec-head">
         <span class="sec-title">Dimensionamento · Solicitado vs Realizado</span>
@@ -506,10 +528,78 @@ footer strong{color:var(--tx-secondary)}
         </div>
       </div>
     </div>
-    <!-- ════════════════════════════════════════ -->
 
-    <!-- GRÁFICOS -->
-    <div id="sec-graficos" style="scroll-margin-top:130px">
+<div id="sec-kpi" style="scroll-margin-top:130px">
+      <div class="sec-head"><span class="sec-title">Indicadores Gerais</span><div class="sec-line"></div></div>
+      <div class="kpi-grid" id="kpi-row"></div>
+
+      <!-- Filtros locais do Quadro Solicitado -->
+      <div class="pres-filtros">
+        <div class="fg"><label>Unidade</label>
+          <select id="pf-uni" onchange="renderPresenca()"><option value="">Todas</option>
+            <option>ANHANGUERA PRIMÁRIA</option><option>ANHANGUERA SECUNDÁRIA</option>
+            <option>BANDEIRANTES</option><option>GUARULHOS</option><option>MOGI</option>
+            <option>RAPOSO</option><option>SANTO ANDRÉ</option><option>SBC</option>
+            <option>SOROCABA</option><option>VALINHOS</option>
+          </select></div>
+        <div class="fg"><label>Mês</label>
+          <select id="pf-mes" onchange="renderPresenca()"><option value="">Todos</option>
+            <option>Março</option><option>Abril</option><option>Maio</option><option>Junho</option><option>Julho</option>
+          </select></div>
+        <div style="align-self:flex-end;margin-left:auto;font-size:11px;color:var(--tx-muted);font-style:italic" id="pf-label"></div>
+      </div>
+
+      <!-- KPIs consolidados -->
+      <div class="kpi-grid" id="pres-kpi-row" style="margin-bottom:14px"></div>
+
+      <!-- Seção: Quadro Solicitado + Totais por unidade/mês -->
+      <div class="pres-sec-lbl">Quadro Solicitado pelo Cliente × Totais de Presença no Mês <span></span></div>
+      <div class="pres-grid" id="pres-cards"></div>
+    </div>
+
+<div id="sec-grade" style="scroll-margin-top:130px">
+      <div class="sec-head"><span class="sec-title">Controle de Presen&#231;a Di&#225;ria do RH</span><div class="sec-line"></div>
+        <span style="font-size:11px;color:var(--tx-muted);white-space:nowrap">Marca&#231;&#245;es por colaborador · Estilo planilha</span>
+      </div>
+      <div class="tbl-card">
+        <div class="tbl-head">
+          <h3>Grade de Marca&#231;&#245;es</h3>
+          <span>P = Presente · FJ = Falta Justificada · FI = Falta Injustificada · AT = Atestado · Use os filtros para navegar</span>
+        </div>
+        <div class="grade-legend">
+          <span class="gl-item"><span class="gl-box mc-p"></span>Presente</span>
+          <span class="gl-item"><span class="gl-box mc-fj"></span>FJ</span>
+          <span class="gl-item"><span class="gl-box mc-fi"></span>FI / AT</span>
+          <span class="gl-item"><span class="gl-box mc-flg"></span>Folga</span>
+          <span class="gl-item"><span class="gl-box mc-fer"></span>Feriado</span>
+          <span class="gl-item"><span class="gl-box mc-d"></span>Desligado</span>
+        </div>
+        <div class="tbl-scroll"><div id="grade-inner"></div></div>
+      </div>
+    </div>
+
+<div id="sec-operacional" style="scroll-margin-top:130px">
+      <div class="sec-head">
+        <span class="sec-title">Controle de Presen&#231;a Di&#225;ria Operacional</span>
+        <div class="sec-line"></div>
+        <span style="font-size:11px;color:var(--tx-muted);white-space:nowrap">Cargos solicitados pelo cliente &times; presen&#231;a realizada, dia a dia</span>
+      </div>
+      <div class="kpi-grid" id="oper-kpi-row" style="margin-bottom:14px"></div>
+      <div class="tbl-card">
+        <div class="tbl-head">
+          <h3>Solicitado &times; Realizado por Cargo</h3>
+          <span>Fonte: Quadro Solicitado pelo Cliente (Planilha de Presen&#231;a Di&#225;ria) &middot; c&#233;lula = realizado / solicitado</span>
+        </div>
+        <div class="grade-legend">
+          <span class="gl-item"><span class="pill pill-blue">100%+</span>Meta atingida</span>
+          <span class="gl-item"><span class="pill pill-amber">70–99%</span>Abaixo da meta</span>
+          <span class="gl-item"><span class="pill pill-red">&lt;70%</span>Cr&#237;tico</span>
+        </div>
+        <div class="tbl-scroll"><div id="oper-inner"></div></div>
+      </div>
+    </div>
+
+<div id="sec-graficos" style="scroll-margin-top:130px">
       <div class="sec-head"><span class="sec-title">An&#225;lise de Presen&#231;a</span><div class="sec-line"></div></div>
       <div class="g2">
         <div class="chart-card">
@@ -537,12 +627,23 @@ footer strong{color:var(--tx-secondary)}
       </div>
     </div>
 
-    <!-- EVOLUÇÃO TEMPORAL — com tabs -->
-    <div id="sec-evolucao" style="scroll-margin-top:130px">
+<div id="sec-evolucao" style="scroll-margin-top:130px">
       <div class="sec-head">
         <span class="sec-title">Evolu&#231;&#227;o Temporal</span>
         <div class="sec-line"></div>
         <span style="font-size:11px;color:var(--amber);white-space:nowrap;font-weight:600">Utilize os filtros para melhor visualiza&#231;&#227;o</span>
+      </div>
+      <div class="g2">
+        <div class="chart-card">
+          <div class="chart-head"><div class="chart-title">% Presen&#231;a — Evolu&#231;&#227;o Di&#225;ria</div><div class="chart-sub">Dias com registro no per&#237;odo filtrado</div></div>
+          <div class="chart-divider"></div>
+          <div class="chart-body"><div class="ch"><canvas id="chEvoPct"></canvas></div></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head"><div class="chart-title">FJ e FI — Evolu&#231;&#227;o Di&#225;ria</div><div class="chart-sub">Faltas justificadas e injustificadas por dia</div></div>
+          <div class="chart-divider"></div>
+          <div class="chart-body"><div class="ch"><canvas id="chEvoFaltas"></canvas></div></div>
+        </div>
       </div>
       <div class="tbl-card" style="margin-bottom:13px">
         <div class="evo-tabs">
@@ -554,39 +655,11 @@ footer strong{color:var(--tx-secondary)}
       </div>
     </div>
 
-    <!-- GRADE DIÁRIA -->
-        <!-- ══ PRESENÇA DIÁRIA ══ -->
-    <div id="sec-presenca" style="scroll-margin-top:130px">
+<div id="sec-presenca" style="scroll-margin-top:130px">
       <div class="sec-head">
-        <span class="sec-title">Presença Diária · Quadro Solicitado × Totais Mensais × Movimentações</span>
+        <span class="sec-title">Movimentações · Admissões e Desligamentos</span>
         <div class="sec-line"></div>
       </div>
-
-      <!-- Filtros -->
-      <div class="pres-filtros">
-        <div class="fg"><label>Unidade</label>
-          <select id="pf-uni" onchange="renderPresenca()"><option value="">Todas</option>
-            <option>ANHANGUERA PRIMÁRIA</option><option>ANHANGUERA SECUNDÁRIA</option>
-            <option>BANDEIRANTES</option><option>GUARULHOS</option><option>MOGI</option>
-            <option>RAPOSO</option><option>SANTO ANDRÉ</option><option>SBC</option>
-            <option>SOROCABA</option><option>VALINHOS</option>
-          </select></div>
-        <div class="fg"><label>Mês</label>
-          <select id="pf-mes" onchange="renderPresenca()"><option value="">Todos</option>
-            <option>Março</option><option>Abril</option><option>Maio</option><option>Junho</option><option>Julho</option>
-          </select></div>
-        <div style="align-self:flex-end;margin-left:auto;font-size:11px;color:var(--tx-muted);font-style:italic" id="pf-label"></div>
-      </div>
-
-      <!-- KPIs consolidados -->
-      <div class="kpi-grid" id="pres-kpi-row" style="margin-bottom:14px"></div>
-
-      <!-- Seção: Quadro Solicitado + Totais por unidade/mês -->
-      <div class="pres-sec-lbl">Quadro Solicitado pelo Cliente × Totais de Presença no Mês <span></span></div>
-      <div class="pres-grid" id="pres-cards"></div>
-
-      <!-- Seção: Desligamentos e Contratações -->
-      <div class="pres-sec-lbl">Movimentações · Desligamentos e Contratações <span></span></div>
       <div class="tbl-card">
         <div class="tbl-head">
           <h3>Tabela de Desligamentos e Contratações — todas as unidades</h3>
@@ -604,32 +677,8 @@ footer strong{color:var(--tx-secondary)}
         </div>
       </div>
     </div>
-    <!-- ════════════════════════════════════════ -->
 
-
-    <div id="sec-grade" style="scroll-margin-top:130px">
-      <div class="sec-head"><span class="sec-title">Controle Di&#225;rio de Presen&#231;a</span><div class="sec-line"></div>
-        <span style="font-size:11px;color:var(--tx-muted);white-space:nowrap">Marca&#231;&#245;es por colaborador · Estilo planilha</span>
-      </div>
-      <div class="tbl-card">
-        <div class="tbl-head">
-          <h3>Grade de Marca&#231;&#245;es</h3>
-          <span>P = Presente · FJ = Falta Justificada · FI = Falta Injustificada · AT = Atestado · Use os filtros para navegar</span>
-        </div>
-        <div class="grade-legend">
-          <span class="gl-item"><span class="gl-box mc-p"></span>Presente</span>
-          <span class="gl-item"><span class="gl-box mc-fj"></span>FJ</span>
-          <span class="gl-item"><span class="gl-box mc-fi"></span>FI / AT</span>
-          <span class="gl-item"><span class="gl-box mc-flg"></span>Folga</span>
-          <span class="gl-item"><span class="gl-box mc-fer"></span>Feriado</span>
-          <span class="gl-item"><span class="gl-box mc-d"></span>Desligado</span>
-        </div>
-        <div class="tbl-scroll"><div id="grade-inner"></div></div>
-      </div>
-    </div>
-
-    <!-- RESUMO -->
-    <div id="sec-resumo" style="scroll-margin-top:130px">
+<div id="sec-resumo" style="scroll-margin-top:130px">
       <div class="sec-head"><span class="sec-title">Resumo por Unidade / M&#234;s / Turno</span><div class="sec-line"></div></div>
       <div class="tbl-card">
         <div class="tbl-scroll">
@@ -641,6 +690,104 @@ footer strong{color:var(--tx-secondary)}
             </tr></thead>
             <tbody id="tbody"></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+<div id="sec-he" style="scroll-margin-top:130px">
+      <div class="sec-head">
+        <span class="sec-title">Hora Extra · HE 50% &amp; 100%</span>
+        <div class="sec-line"></div>
+        <span style="font-size:11px;color:var(--tx-muted);white-space:nowrap">Dados: Espelhos de Ponto EzPoint</span>
+      </div>
+      <div class="dim-kpi-row" id="he-kpi-row"></div>
+      <div class="tbl-card" style="margin-bottom:13px">
+        <div class="tbl-head">
+          <h3>Horas Extras por Unidade — Ordenado por Maior Volume</h3>
+          <span>HE 50% + HE 100% · filtro atual</span>
+        </div>
+        <div class="tbl-scroll">
+          <table class="tdim2">
+            <thead><tr>
+              <th class="tal">Unidade</th>
+              <th style="background:#0079C2">HE 50% (h)</th>
+              <th style="background:#C0281C">HE 100% (h)</th>
+              <th>HE Total (h)</th>
+              <th>Colaboradores c/ HE</th>
+              <th>Média HE/Colab. (h)</th>
+            </tr></thead>
+            <tbody id="he-unidade-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tbl-card">
+        <div class="tbl-head">
+          <h3>Detalhamento por Colaborador · HE 50% e 100%</h3>
+          <span id="he-colab-count">0 colaboradores</span>
+        </div>
+        <div style="padding:9px 16px;background:#F8FAFC;border-bottom:1px solid var(--border-light);display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
+          <div class="fg" style="flex:1;min-width:180px"><label>Buscar</label>
+            <input type="text" id="he-search" placeholder="Nome do colaborador..." oninput="renderHE(getF(), filtrar(getF()))"
+              style="border:1.5px solid var(--border);border-radius:6px;padding:7px 11px;font-size:13px;font-family:var(--font);width:100%">
+          </div>
+          <div class="fg"><label>Ordenar por</label>
+            <select id="he-sort" onchange="renderHE(getF(), filtrar(getF()))">
+              <option value="">Total: Maior → Menor</option>
+              <option value="total-asc">Total: Menor → Maior</option>
+              <option value="he50-desc">HE 50%: Maior → Menor</option>
+              <option value="he50-asc">HE 50%: Menor → Maior</option>
+              <option value="he100-desc">HE 100%: Maior → Menor</option>
+              <option value="he100-asc">HE 100%: Menor → Maior</option>
+            </select>
+          </div>
+        </div>
+        <div class="tbl-scroll">
+          <table class="tdet">
+            <thead><tr>
+              <th class="tal">Colaborador</th><th class="tal">Unidade</th>
+              <th class="tal">Cargo</th><th class="tal">Turno</th>
+              <th>HE 50% (h)</th><th>HE 100% (h)</th><th>Total (h)</th>
+            </tr></thead>
+            <tbody id="he-colab-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<div id="sec-he-graficos" style="scroll-margin-top:130px">
+      <div class="sec-head">
+        <span class="sec-title">Gráficos de Horas Extras · Gestão HE 50% &amp; 100%</span>
+        <div class="sec-line"></div>
+      </div>
+      <div class="g2">
+        <div class="chart-card">
+          <div class="chart-head"><div class="chart-title">Composi&#231;&#227;o HE 50% &times; HE 100%</div><div class="chart-sub">Propor&#231;&#227;o do total de horas extras no per&#237;odo filtrado</div></div>
+          <div class="chart-divider"></div>
+          <div class="chart-body"><div class="ch"><canvas id="chart-he-donut"></canvas></div></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head"><div class="chart-title">Evolu&#231;&#227;o de Horas Extras</div><div class="chart-sub">M&#233;s a m&#234;s · n&#227;o muda com o filtro de M&#234;s (mostra a s&#233;rie completa)</div></div>
+          <div class="chart-divider"></div>
+          <div class="chart-body"><div class="ch"><canvas id="chart-he-evolucao"></canvas></div></div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="chart-card">
+          <div class="chart-head"><div class="chart-title" id="he-unidade-t">Horas Extras por Unidade</div><div class="chart-sub">HE 50% + HE 100% empilhadas &middot; filtro atual</div></div>
+          <div class="chart-divider"></div>
+          <div class="chart-body"><div class="ch"><canvas id="chart-he-unidade"></canvas></div></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head"><div class="chart-title" id="he-turno-t">Horas Extras por Turno</div><div class="chart-sub">HE 50% + HE 100% empilhadas &middot; filtro atual</div></div>
+          <div class="chart-divider"></div>
+          <div class="chart-body"><div class="ch"><canvas id="chart-he-turno"></canvas></div></div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="chart-card">
+          <div class="chart-head"><div class="chart-title" id="he-cargo-t">Horas Extras por Cargo</div><div class="chart-sub">HE 50% + HE 100% empilhadas &middot; ordenado por total</div></div>
+          <div class="chart-divider"></div>
+          <div class="chart-body"><div class="ch"><canvas id="chart-he-cargo"></canvas></div></div>
         </div>
       </div>
     </div>
@@ -676,7 +823,7 @@ function toggleSb(){
   document.getElementById("main").classList.toggle("exp",sbCol);
 }
 
-const NAV_IDS=["nav-kpi","nav-graficos","nav-dimensionamento","nav-evolucao","nav-presenca","nav-grade","nav-resumo"];
+const NAV_IDS=["nav-dimensionamento","nav-kpi","nav-grade","nav-operacional","nav-graficos","nav-evolucao","nav-presenca","nav-resumo","nav-he"];
 function navTo(sectionId, navIdx){
   // Activar item sidebar
   NAV_IDS.forEach((id,i)=>{
@@ -740,6 +887,15 @@ function optBars(maxY,suf){
       x:{grid:{display:false},ticks:{color:"#0F1B2D",font:{size:11,weight:"700",family:"Inter"}}},
       y:{type:"linear",position:"left",min:0,max:maxY||115,grid:{display:false},ticks:{display:false}},
       yM:{type:"linear",position:"right",min:0,max:maxY||115,grid:{drawOnChartArea:false},ticks:{display:false}}
+    }};
+}
+function optStack(suf){
+  return{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:"bottom",labels:{font:{size:11,family:"Inter"},boxWidth:12,usePointStyle:true,color:"#4B5768"}},
+             tooltip:{bodyFont:{family:"Inter"},callbacks:{label:ctx=>ctx.dataset.label+": "+(Math.round(ctx.parsed.y*10)/10)+(suf||"")}}},
+    scales:{
+      x:{stacked:true,grid:{display:false},ticks:{color:"#0F1B2D",font:{size:11,weight:"700",family:"Inter"}}},
+      y:{stacked:true,grid:{color:"#EAECF0"},ticks:{color:"#8FA8C4",font:{size:10,family:"Inter"}}}
     }};
 }
 
@@ -901,6 +1057,39 @@ function render(){
       <tr class="tr-tot"><td colspan="2">TOTAL GERAL</td><td>${totDP}</td><td>${totDFJ||"—"}</td><td>${totDFI||"—"}</td><td>${totDT}</td><td>${taxaTD!=null?taxaTD+"%":"—"}</td></tr>
     </tbody></table>`;
 
+  /* GRÁFICOS DE EVOLUÇÃO DIÁRIA — agregado de todas as unidades filtradas, por dia */
+  if(document.getElementById("chEvoPct")){
+    const diaAgg={};
+    diasOrdem.forEach(d=>{diaAgg[d]={p:0,fj:0,fi:0};});
+    Object.values(uDiasMap).forEach(porDia=>{
+      Object.entries(porDia).forEach(([d,v])=>{
+        diaAgg[d].p+=v.p;diaAgg[d].fj+=v.fj;diaAgg[d].fi+=v.fi;
+      });
+    });
+    const diasComDado=diasOrdem.filter(d=>{const v=diaAgg[d];return v&&(v.p+v.fj+v.fi)>0;});
+    const taxaDia=diasComDado.map(d=>{const v=diaAgg[d];const t=v.p+v.fj+v.fi;return t>0?Math.round(v.p/t*1000)/10:0;});
+    dc("chEvoPct");
+    GR.chEvoPct=new Chart(document.getElementById("chEvoPct"),{
+      data:{labels:diasComDado,datasets:[{type:"line",label:"% Presença",data:taxaDia,borderColor:C.blue,backgroundColor:"transparent",borderWidth:2,tension:.25,pointRadius:2}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{bodyFont:{family:"Inter"},callbacks:{label:ctx=>ctx.dataset.label+": "+ctx.parsed.y+"%"}}},
+        scales:{x:{grid:{display:false},ticks:{color:"#0F1B2D",font:{size:10,family:"Inter"},maxRotation:0,autoSkip:true}},
+          y:{min:0,max:110,grid:{color:"#EAECF0"},ticks:{color:"#8FA8C4",font:{size:10,family:"Inter"}}}}}
+    });
+    dc("chEvoFaltas");
+    GR.chEvoFaltas=new Chart(document.getElementById("chEvoFaltas"),{
+      data:{labels:diasComDado,datasets:[
+        {type:"bar",label:"FJ",data:diasComDado.map(d=>diaAgg[d].fj),backgroundColor:C.amber,borderRadius:3},
+        {type:"bar",label:"FI",data:diasComDado.map(d=>diaAgg[d].fi),backgroundColor:C.red,borderRadius:3}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,position:"bottom",labels:{font:{size:11,family:"Inter"},boxWidth:12,usePointStyle:true,color:"#4B5768"}},
+          tooltip:{bodyFont:{family:"Inter"}}},
+        scales:{x:{stacked:true,grid:{display:false},ticks:{color:"#0F1B2D",font:{size:10,family:"Inter"},maxRotation:0,autoSkip:true}},
+          y:{stacked:true,grid:{color:"#EAECF0"},ticks:{color:"#8FA8C4",font:{size:10,family:"Inter"}}}}}
+    });
+  }
+
   /* GRADE */
   const gWrapper=document.getElementById("grade-inner");
   if(!blocos.length){gWrapper.innerHTML='<p style="padding:20px;color:#8FA8C4">Selecione filtros para ver a grade.</p>';return;}
@@ -945,6 +1134,8 @@ function render(){
   const thDs=diasOrdem.map(d=>`<th>${d.substring(0,5)}</th>`).join("");
   gWrapper.innerHTML=`<div style="overflow:auto;max-height:450px"><table class="tgrade"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Cargo</th><th>Turno</th>${thDs}</tr></thead><tbody>${r1}${r2}${r3}${r4}${gRows}</tbody></table></div>`;
 
+  renderOperacional(f, blocos, diasOrdem);
+
   /* TABELA RESUMO */
   const grupos={};
   blocos.forEach(b=>{
@@ -967,6 +1158,298 @@ function render(){
     <td class="${stCls(r.taxa)}">${stTxt(r.taxa)}</td>
   </tr>`).join("")
   :'<tr><td colspan="10" style="text-align:center;padding:24px;color:#8FA8C4">Nenhum registro encontrado.</td></tr>';
+
+  renderHE(f, blocos);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MÓDULO: CONTROLE DE PRESENÇA DIÁRIA OPERACIONAL
+   Compara, dia a dia, o solicitado por cargo com quantos colaboradores
+   daquele cargo estavam "P" (presentes) naquele dia.
+
+   Fonte principal: "Quadro Solicitado pelo Cliente" (CARGO/QUANTIDADE) lido
+   do topo de cada aba da Planilha de Presença Diária — dá a meta exata
+   daquele turno/mês.
+
+   Fallback (cruzamento de fontes): quando o bloco (unidade+mês+turno) não
+   tem esse quadro — caso da BIMBO SBC, cuja planilha só traz um total geral
+   por dia, sem quebra por cargo — usamos a Planilha de Controle de
+   Contratações (DIM_DADOS), que traz o dimensionamento solicitado pelo
+   cliente já separado por cargo e, na maioria dos casos, por turno. Nesse
+   caso a meta usada é a mesma do Dimensionamento (não varia dia a dia
+   dentro do mês) e a célula fica com uma "~" indicando a origem.
+   ═══════════════════════════════════════════════════════════════════ */
+function operRatioCls(pct){ return pct>=100?"pill pill-blue":pct>=70?"pill pill-amber":"pill pill-red"; }
+function operNorm(s){ return (s||"").toString().normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase().trim(); }
+
+// Meta de um cargo dentro de um bloco: usa o quadro da própria planilha de
+// presença diária quando existe; senão tenta achar o mesmo cargo (e, se
+// possível, o mesmo turno) no Dimensionamento (Controle de Contratações).
+function operMetaCargo(bloco, cargo){
+  if(bloco.quadroSolicitado && bloco.quadroSolicitado[cargo] != null){
+    return {qtd: bloco.quadroSolicitado[cargo], fallback:false};
+  }
+  if(typeof DIM_DADOS !== "undefined" && Array.isArray(DIM_DADOS) && DIM_DADOS.length){
+    const cargoN = operNorm(cargo);
+    const linha = DIM_DADOS.find(d => d.u===bloco.unidade && operNorm(d.c)===cargoN);
+    if(linha){
+      if(linha.porTurno){
+        const turnoN = operNorm(bloco.turno);
+        const chave = Object.keys(linha.porTurno).find(k=>operNorm(k)===turnoN);
+        if(chave) return {qtd: linha.porTurno[chave], fallback:true};
+      }
+      if(linha.s) return {qtd: linha.s, fallback:true};
+    }
+  }
+  return null;
+}
+
+function renderOperacional(f, blocos, diasOrdem){
+  const wrap = document.getElementById("oper-inner");
+  if(!wrap) return;
+
+  // para cada bloco, mapeia cargo -> meta (com origem), juntando planilha
+  // diária + fallback do Dimensionamento
+  const cargosSet = new Set();
+  const metaPorBloco = new Map(); // bloco -> {cargo: {qtd, fallback}}
+  let usouFallback = false;
+  blocos.forEach(b=>{
+    const cargosCandidatos = new Set(Object.keys(b.quadroSolicitado||{}));
+    b.colaboradores.forEach(col=>{ if(col.cargo) cargosCandidatos.add(col.cargo); });
+    const metas = {};
+    cargosCandidatos.forEach(c=>{
+      if(f.c && c!==f.c) return;
+      const m = operMetaCargo(b, c);
+      if(!m) return;
+      metas[c] = m;
+      cargosSet.add(c);
+      if(m.fallback) usouFallback = true;
+    });
+    metaPorBloco.set(b, metas);
+  });
+
+  const cargos = [...cargosSet].sort();
+  if(!cargos.length){
+    document.getElementById("oper-kpi-row").innerHTML = "";
+    wrap.innerHTML = '<p style="padding:20px;color:#8FA8C4">Nenhum cargo com meta encontrada para o filtro atual — nem na Planilha de Presença Diária, nem no Controle de Contratações. Confira se o Quadro de Dimensionamento (Contratações) foi importado no painel da analista.</p>';
+    return;
+  }
+
+  // agrega por cargo/dia: solicitado + realizado (P por cargo)
+  const agg = {};
+  cargos.forEach(c=>{ agg[c]={}; diasOrdem.forEach(d=>{ agg[c][d]={sol:0,real:0,fallback:false}; }); });
+
+  blocos.forEach(b=>{
+    const metas = metaPorBloco.get(b);
+    diasOrdem.forEach(d=>{
+      if(!b.resumo[d]) return; // esse dia não pertence ao mês desse bloco
+      Object.entries(metas).forEach(([c,m])=>{
+        agg[c][d].sol += m.qtd;
+        if(m.fallback) agg[c][d].fallback = true;
+      });
+    });
+    b.colaboradores.forEach(col=>{
+      if(!metas[col.cargo]) return;
+      Object.entries(col.dias).forEach(([d,status])=>{
+        if(status==="P" && agg[col.cargo] && agg[col.cargo][d]) agg[col.cargo][d].real += 1;
+      });
+    });
+  });
+
+  // KPIs consolidados (soma do período filtrado)
+  let totSol=0, totReal=0, diasComDado=0;
+  diasOrdem.forEach(d=>{
+    let s=0,r=0,tem=false;
+    cargos.forEach(c=>{ const v=agg[c][d]; if(v.sol>0||v.real>0){tem=true;} s+=v.sol; r+=v.real; });
+    if(tem){ totSol+=s; totReal+=r; diasComDado++; }
+  });
+  const aderencia = totSol>0 ? Math.round(totReal/totSol*1000)/10 : null;
+  document.getElementById("oper-kpi-row").innerHTML=[
+    {lbl:"Cargos com meta definida",val:String(cargos.length),sub:"Presença diária + Dimensionamento",cls:"k-indigo"},
+    {lbl:"Solicitado (soma do período)",val:fmt(totSol),sub:diasComDado+" dia(s) com dado",cls:""},
+    {lbl:"Realizado (soma do período)",val:fmt(totReal),sub:"Colaboradores presentes nos cargos solicitados",cls:"k-green"},
+    {lbl:"Aderência média",val:aderencia!=null?aderencia+"%":"—",sub:aderencia==null?"Sem dado no período":aderencia>=100?"Meta atingida":"Abaixo da meta",cls:aderencia==null?"":aderencia>=100?"k-green":aderencia>=70?"k-amber":"k-red"},
+  ].map(k=>`<div class="kpi ${k.cls}"><div class="kpi-lbl">${k.lbl}</div><div class="kpi-val">${k.val}</div><div class="kpi-sub">${k.sub}</div></div>`).join("");
+
+  // tabela: linhas = cargo, colunas = dias, célula = realizado/solicitado
+  const thDs = diasOrdem.map(d=>`<th>${d.substring(0,5)}</th>`).join("");
+  const rows = cargos.map(c=>{
+    const cargoTemFallback = diasOrdem.some(d=>agg[c][d].fallback);
+    const cells = diasOrdem.map(d=>{
+      const v = agg[c][d];
+      if(v.sol===0 && v.real===0) return '<td><span class="mc-dot">·</span></td>';
+      const pct = v.sol>0 ? Math.round(v.real/v.sol*1000)/10 : (v.real>0?100:0);
+      const marca = v.fallback ? "~" : "";
+      return `<td><span class="${operRatioCls(pct)}" title="${v.real}/${v.sol}${v.fallback?' · meta via Dimensionamento (Contratações)':''}">${marca}${v.real}/${v.sol}</span></td>`;
+    }).join("");
+    return `<tr><td class="tal" style="font-weight:700">${c}${cargoTemFallback?' <span style="color:var(--tx-muted);font-weight:500;font-size:10.5px">(meta ~ via Dimensionamento)</span>':''}</td>${cells}</tr>`;
+  }).join("");
+
+  wrap.innerHTML = `<div style="overflow:auto;max-height:450px"><table class="tgrade"><thead><tr><th class="tal">Cargo</th>${thDs}</tr></thead><tbody>${rows}</tbody></table></div>`
+    + (usouFallback ? '<p style="padding:8px 16px;font-size:11px;color:var(--tx-muted)">~ = meta não veio da Planilha de Presença Diária desse turno; foi cruzada com o Dimensionamento solicitado no Controle de Contratações (não varia dia a dia dentro do mês).</p>' : '');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MÓDULO: HORA EXTRA (HE 50% / HE 100%)
+   Fonte: Espelhos de Ponto EzPoint importados no painel da analista.
+   Usa os mesmos filtros da barra superior (Unidade/Mês/Turno/Cargo).
+   ═══════════════════════════════════════════════════════════════════ */
+function fmt1(n){return (Math.round(n*10)/10).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});}
+
+function heColabList(blocos){
+  const lista=[];
+  blocos.forEach(b=>{
+    b.colaboradores.forEach(col=>{
+      if(!col.horasExtras) return;
+      let he50=0,he100=0;
+      Object.values(col.horasExtras).forEach(h=>{he50+=h.he50||0;he100+=h.he100||0;});
+      if(he50+he100<=0) return;
+      lista.push({nome:col.nome,unidade:b.unidade,cargo:col.cargo||"—",turno:b.turno,he50,he100,total:he50+he100});
+    });
+  });
+  return lista;
+}
+
+function heAgrupar(lista,chave){
+  const mapa={};
+  lista.forEach(x=>{
+    const k=x[chave];
+    if(!mapa[k])mapa[k]={chave:k,he50:0,he100:0,colabs:new Set()};
+    mapa[k].he50+=x.he50;mapa[k].he100+=x.he100;mapa[k].colabs.add(x.nome+"|"+x.unidade);
+  });
+  return Object.values(mapa).map(m=>({chave:m.chave,he50:m.he50,he100:m.he100,total:m.he50+m.he100,colabs:m.colabs.size}))
+    .sort((a,b)=>b.total-a.total);
+}
+
+function renderHE(f, blocos){
+  if(!document.getElementById("he-kpi-row")) return;
+  const lista=heColabList(blocos);
+  const totHe50=lista.reduce((s,x)=>s+x.he50,0), totHe100=lista.reduce((s,x)=>s+x.he100,0);
+  const totHe=totHe50+totHe100;
+  const nColabs=lista.length;
+  const media=nColabs>0?totHe/nColabs:0;
+
+  document.getElementById("he-kpi-row").innerHTML=[
+    {lbl:"Total de Horas Extras",val:fmt1(totHe)+"h",sub:(f.m||"Mar–Jul")+(f.u?" · "+f.u:""),cls:"k-indigo"},
+    {lbl:"Colaboradores com HE",val:String(nColabs),sub:"Registraram hora extra no período",cls:"k-amber"},
+    {lbl:"Média por Colaborador",val:fmt1(media)+"h",sub:"No período filtrado",cls:"k-blue"},
+    {lbl:"HE 50%",val:fmt1(totHe50)+"h",sub:totHe>0?fmt1(totHe50/totHe*100)+"% do total":"—",cls:""},
+    {lbl:"HE 100%",val:fmt1(totHe100)+"h",sub:totHe>0?fmt1(totHe100/totHe*100)+"% do total":"—",cls:"k-red"},
+  ].map(k=>`<div class="kpi ${k.cls}"><div class="kpi-lbl">${k.lbl}</div><div class="kpi-val">${k.val}</div><div class="kpi-sub">${k.sub}</div></div>`).join("");
+
+  /* Tabela por unidade */
+  const porUnid=heAgrupar(lista,"unidade");
+  const tbodyU=document.getElementById("he-unidade-tbody");
+  tbodyU.innerHTML=porUnid.length?porUnid.map(r=>`<tr>
+    <td class="tal" style="font-weight:700">${r.chave}</td>
+    <td style="color:#0079C2;font-weight:600">${fmt1(r.he50)}</td>
+    <td style="color:#C0281C;font-weight:600">${fmt1(r.he100)}</td>
+    <td style="font-weight:700">${fmt1(r.total)}</td>
+    <td>${r.colabs}</td>
+    <td>${fmt1(r.colabs>0?r.total/r.colabs:0)}</td>
+  </tr>`).join(""):'<tr><td colspan="6" style="text-align:center;padding:24px;color:#8FA8C4">Nenhuma hora extra no período filtrado.</td></tr>';
+
+  /* Tabela por colaborador — busca + ordenação */
+  const heSearchEl=document.getElementById("he-search"), heSortEl=document.getElementById("he-sort");
+  const termoBusca=heSearchEl?heSearchEl.value.trim().toLowerCase():"";
+  const ordem=heSortEl?heSortEl.value:"";
+  let porColab=[...lista];
+  if(termoBusca) porColab=porColab.filter(x=>x.nome.toLowerCase().includes(termoBusca));
+  const sorters={
+    "":(a,b)=>b.total-a.total,
+    "total-asc":(a,b)=>a.total-b.total,
+    "he50-desc":(a,b)=>b.he50-a.he50,
+    "he50-asc":(a,b)=>a.he50-b.he50,
+    "he100-desc":(a,b)=>b.he100-a.he100,
+    "he100-asc":(a,b)=>a.he100-b.he100,
+  };
+  porColab.sort(sorters[ordem]||sorters[""]);
+  document.getElementById("he-colab-count").textContent=porColab.length+" colaborador(es)"+(termoBusca?" (filtrado)":"");
+  const tbodyC=document.getElementById("he-colab-tbody");
+  tbodyC.innerHTML=porColab.length?porColab.map(r=>`<tr>
+    <td class="tal">${r.nome}</td>
+    <td class="tal">${r.unidade}</td>
+    <td class="tal">${r.cargo}</td>
+    <td class="tal" style="color:#0079C2;font-weight:600">${r.turno}</td>
+    <td style="color:#0079C2">${fmt1(r.he50)}</td>
+    <td style="color:#C0281C">${fmt1(r.he100)}</td>
+    <td style="font-weight:700">${fmt1(r.total)}</td>
+  </tr>`).join(""):'<tr><td colspan="7" style="text-align:center;padding:24px;color:#8FA8C4">Nenhum colaborador com hora extra no período filtrado.</td></tr>';
+
+  if(!document.getElementById("chart-he-donut")) return; // seção de gráficos pode não estar renderizada ainda
+
+  /* Donut HE50 x HE100 */
+  dc("heDonut");
+  GR.heDonut=new Chart(document.getElementById("chart-he-donut"),{
+    type:"doughnut",
+    data:{labels:["HE 50%","HE 100%"],datasets:[{data:[Math.round(totHe50*10)/10,Math.round(totHe100*10)/10],backgroundColor:[C.blue,C.red],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:"62%",
+      plugins:{barlabels:false,legend:{display:true,position:"bottom",labels:{font:{size:11,family:"Inter"},boxWidth:12,usePointStyle:true,color:"#4B5768"}},
+        tooltip:{bodyFont:{family:"Inter"},callbacks:{label:ctx=>ctx.label+": "+fmt1(ctx.parsed)+"h"}}}}
+  });
+
+  /* Evolução mensal — ignora filtro de mês, respeita u/t/c */
+  const blocosEvo=DADOS.filter(b=>{
+    if(f.u&&b.unidade!==f.u)return false;
+    if(f.t&&b.turno!==f.t)return false;
+    if(f.c&&!b.colaboradores.some(cc=>cc.cargo===f.c))return false;
+    return true;
+  });
+  const porMes=MESES.map(m=>{
+    const l=heColabList(blocosEvo.filter(b=>b.mes===m));
+    return{mes:m,he50:l.reduce((s,x)=>s+x.he50,0),he100:l.reduce((s,x)=>s+x.he100,0)};
+  });
+  dc("heEvo");
+  GR.heEvo=new Chart(document.getElementById("chart-he-evolucao"),{
+    data:{labels:porMes.map(x=>x.mes),
+      datasets:[
+        {type:"line",label:"HE 50%",data:porMes.map(x=>Math.round(x.he50*10)/10),borderColor:C.blue,backgroundColor:"transparent",borderWidth:2,tension:.3,pointRadius:3},
+        {type:"line",label:"HE 100%",data:porMes.map(x=>Math.round(x.he100*10)/10),borderColor:C.red,backgroundColor:"transparent",borderWidth:2,tension:.3,pointRadius:3}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,position:"bottom",labels:{font:{size:11,family:"Inter"},boxWidth:12,usePointStyle:true,color:"#4B5768"}},
+        tooltip:{bodyFont:{family:"Inter"},callbacks:{label:ctx=>ctx.dataset.label+": "+fmt1(ctx.parsed.y)+"h"}}},
+      scales:{x:{grid:{display:false},ticks:{color:"#0F1B2D",font:{size:11,weight:"700",family:"Inter"}}},
+        y:{grid:{color:"#EAECF0"},ticks:{color:"#8FA8C4",font:{size:10,family:"Inter"}}}}}
+  });
+
+  /* Por unidade — barras empilhadas */
+  document.getElementById("he-unidade-t").textContent="Horas Extras por Unidade"+(f.m?" — "+f.m:"");
+  dc("heUnid");
+  GR.heUnid=new Chart(document.getElementById("chart-he-unidade"),{
+    data:{labels:porUnid.map(x=>x.chave.replace("ANHANGUERA PRIMÁRIA","ANH.PRIM.").replace("ANHANGUERA SECUNDÁRIA","ANH.SEC.").replace("SANTO ANDRÉ","S.ANDRÉ")),
+      datasets:[
+        {type:"bar",label:"HE 50%",data:porUnid.map(x=>Math.round(x.he50*10)/10),backgroundColor:C.blue,borderRadius:4,stack:"he"},
+        {type:"bar",label:"HE 100%",data:porUnid.map(x=>Math.round(x.he100*10)/10),backgroundColor:C.red,borderRadius:4,stack:"he"}
+      ]},
+    options:optStack("h")
+  });
+
+  /* Por turno — barras empilhadas */
+  const porTurno=heAgrupar(lista,"turno");
+  document.getElementById("he-turno-t").textContent="Horas Extras por Turno"+(f.u?" — "+f.u:"");
+  dc("heTurno");
+  GR.heTurno=new Chart(document.getElementById("chart-he-turno"),{
+    data:{labels:porTurno.map(x=>x.chave),
+      datasets:[
+        {type:"bar",label:"HE 50%",data:porTurno.map(x=>Math.round(x.he50*10)/10),backgroundColor:C.blue,borderRadius:4,stack:"he"},
+        {type:"bar",label:"HE 100%",data:porTurno.map(x=>Math.round(x.he100*10)/10),backgroundColor:C.red,borderRadius:4,stack:"he"}
+      ]},
+    options:optStack("h")
+  });
+
+  /* Por cargo — barras empilhadas, top 10 */
+  const porCargo=heAgrupar(lista,"cargo").slice(0,10);
+  document.getElementById("he-cargo-t").textContent="Horas Extras por Cargo"+(f.u?" — "+f.u:"")+(porCargo.length?" · "+porCargo.length+" categorias":"");
+  dc("heCargo");
+  GR.heCargo=new Chart(document.getElementById("chart-he-cargo"),{
+    data:{labels:porCargo.map(x=>x.chave),
+      datasets:[
+        {type:"bar",label:"HE 50%",data:porCargo.map(x=>Math.round(x.he50*10)/10),backgroundColor:C.blue,borderRadius:4,stack:"he"},
+        {type:"bar",label:"HE 100%",data:porCargo.map(x=>Math.round(x.he100*10)/10),backgroundColor:C.red,borderRadius:4,stack:"he"}
+      ]},
+    options:optStack("h")
+  });
 }
 
 // Iniciar com KPI ativo

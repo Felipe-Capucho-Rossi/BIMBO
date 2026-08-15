@@ -113,7 +113,7 @@ td select,td input{padding:5px 6px;font-size:12.5px}
       <button class="btn" id="btnProcessarPd">Processar arquivo</button>
       <div id="pdMsg"></div>
       <div id="pdPreview" class="hidden" style="margin-top:16px">
-        <table><thead><tr><th class="tal">Aba (unidade / turno detectado)</th><th>Mês</th><th>Colaboradores</th><th>Desligamentos encontrados</th></tr></thead>
+        <table><thead><tr><th class="tal">Aba (unidade / turno detectado)</th><th>Mês</th><th>Colaboradores</th><th>Desligamentos encontrados</th><th>Quadro solicitado (por cargo)</th></tr></thead>
           <tbody id="pdTbody"></tbody>
         </table>
         <div style="margin-top:14px"><button class="btn" id="btnConfirmarPd">Confirmar e salvar no dashboard</button></div>
@@ -593,8 +593,49 @@ function achaColIndice(header, textoExato){
   return header.findIndex(h => (h||'').toString().trim().toUpperCase() === textoExato.toUpperCase());
 }
 
+// Algumas planilhas trazem um "!ref" inflado (formatação aplicada até o fim da
+// aba, ex.: A1:BY1048574) mesmo tendo poucas linhas de dado real. Sem isso o
+// sheet_to_json trava/demora muito. Limitamos a leitura às primeiras `maxRow`
+// linhas — suficiente pra qualquer cabeçalho/tabela auxiliar que precisamos ler.
+function planilhaParaLinhas(ws, maxRow){
+  if(!ws['!ref']) return [];
+  const full = XLSX.utils.decode_range(ws['!ref']);
+  let wsUso = ws;
+  if(full.e.r > maxRow){
+    wsUso = {...ws, '!ref': XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:maxRow, c:full.e.c}})};
+  }
+  return XLSX.utils.sheet_to_json(wsUso, {header:1, raw:true, defval:''});
+}
+
+// Extrai a tabela "QUADRO SOLICITADO PELO CLIENTE" (CARGO / QUANTIDADE) que
+// aparece perto do topo da maioria das planilhas de Presença Diária — é o
+// dimensionamento (por cargo) que o cliente pediu para aquele turno/unidade.
+function extraiQuadroSolicitado(rows){
+  const labelIdx = rows.findIndex(r => r.some(c => normalizaTxt(c).includes('QUADRO SOLICITADO')));
+  const quadro = {};
+  if(labelIdx < 0) return quadro;
+  let subIdx=-1, colCargo=-1, colQtd=-1;
+  for(let i=labelIdx; i<Math.min(labelIdx+4, rows.length); i++){
+    const r = rows[i]||[];
+    const ci = r.findIndex(c => normalizaTxt(c)==='CARGO');
+    const qi = r.findIndex(c => normalizaTxt(c).includes('QUANTIDADE'));
+    if(ci>=0 && qi>=0){ subIdx=i; colCargo=ci; colQtd=qi; break; }
+  }
+  if(subIdx<0) return quadro;
+  for(let i=subIdx+1; i<rows.length; i++){
+    const cargo = (rows[i]?.[colCargo]||'').toString().trim();
+    const qtdRaw = rows[i]?.[colQtd];
+    if(!cargo) break;
+    const qtd = Number(qtdRaw);
+    if(isNaN(qtd)) break;
+    quadro[cargo] = (quadro[cargo]||0) + qtd;
+  }
+  return quadro;
+}
+
 function parsePresencaDiariaSheet(ws, sheetName, fileName){
-  const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
+  const quadroSolicitado = extraiQuadroSolicitado(planilhaParaLinhas(ws, 60));
+  const rows = planilhaParaLinhas(ws, 2000);
 
   const partes = sheetName.split(' - ');
   const unidadeTxt = (partes[0]||'').replace(/bimbo/i,'').trim();
@@ -684,7 +725,7 @@ function parsePresencaDiariaSheet(ws, sheetName, fileName){
       });
     }
   }
-  return {unidade, turno, mesNome, sheetName, colaboradores, desligamentos};
+  return {unidade, turno, mesNome, sheetName, colaboradores, desligamentos, quadroSolicitado};
 }
 
 let PD_PARSED = null;
@@ -704,12 +745,17 @@ document.getElementById('btnProcessarPd').addEventListener('click', async ()=>{
   if(!abas.length){ showMsg(msgEl,'Não consegui reconhecer nenhuma aba de turno nesse arquivo.',false); return; }
 
   PD_PARSED = abas;
-  document.getElementById('pdTbody').innerHTML = abas.map(a => `<tr>
+  document.getElementById('pdTbody').innerHTML = abas.map(a => {
+    const cargos = Object.keys(a.quadroSolicitado||{});
+    const qtdTxt = cargos.length ? cargos.map(c=>`${c}: ${a.quadroSolicitado[c]}`).join(', ') : '<span style="color:var(--tx2)">não encontrado nessa aba</span>';
+    return `<tr>
     <td class="tal">${a.sheetName} → ${a.unidade||'<b style="color:var(--red)">não reconhecida</b>'} / ${a.turno}</td>
     <td>${a.mesNome||'<b style="color:var(--red)">?</b>'}</td>
     <td>${a.colaboradores.length}</td>
     <td>${a.desligamentos.length}</td>
-  </tr>`).join('');
+    <td style="font-size:11.5px">${qtdTxt}</td>
+  </tr>`;
+  }).join('');
   document.getElementById('pdPreview').classList.remove('hidden');
   showMsg(msgEl, `${abas.length} aba(s) lida(s). Confira se a unidade foi reconhecida antes de salvar.`, true);
 });
@@ -730,6 +776,10 @@ document.getElementById('btnConfirmarPd').addEventListener('click', async ()=>{
   PD_PARSED.forEach(aba => {
     let registro = DADOS.find(r => r.unidade===aba.unidade && r.mes===aba.mesNome && r.turno===aba.turno);
     if(!registro){ registro = {unidade:aba.unidade, mes:aba.mesNome, turno:aba.turno, resumo:{}, colaboradores:[]}; DADOS.push(registro); }
+
+    if(aba.quadroSolicitado && Object.keys(aba.quadroSolicitado).length){
+      registro.quadroSolicitado = aba.quadroSolicitado;
+    }
 
     const diasTocados = new Set();
     aba.colaboradores.forEach(emp => {
@@ -766,8 +816,14 @@ document.getElementById('btnConfirmarPd').addEventListener('click', async ()=>{
 });
 
 // ---------- IMPORTAR CONTROLE DE CONTRATAÇÕES (DIMENSIONAMENTO GERAL) ----------
+// Entre a coluna "Quantidade Total de vagas solicitadas" e "QUANTIDADE
+// CONTRATAÇÕES" a planilha "DIMENSIONAMENTO GERAL ATUALIZAD" traz o
+// solicitado JÁ separado por turno (ex.: "1º TURNO", "2º TURNO",
+// "1º TURNO 12X36" ...). Guardamos isso em `porTurno` — serve de referência
+// (fallback) para o Controle de Presença Diária Operacional em unidades cuja
+// planilha de Presença Diária não traz o quadro solicitado por cargo (ex.: SBC).
 function parseDimensionamentoGeral(ws){
-  const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
+  const rows = planilhaParaLinhas(ws, 1200);
   const headerIdx = rows.findIndex(r => r.some(c => (c||'').toString().trim().toUpperCase()==='UNIDADE'));
   if(headerIdx < 0) return [];
   const header = rows[headerIdx];
@@ -775,6 +831,14 @@ function parseDimensionamentoGeral(ws){
   const idxC = achaColIndice(header,'CARGO');
   const idxS = achaColIndice(header,'Quantidade Total de vagas solicitadas');
   const idxR = achaColIndice(header,'QUANTIDADE CONTRATAÇÕES');
+  // colunas entre idxS e idxR = solicitado por turno (o próprio cabeçalho já traz o nome do turno)
+  const colsTurno = [];
+  if(idxS>=0 && idxR>idxS){
+    for(let ci=idxS+1; ci<idxR; ci++){
+      const rotulo = (header[ci]||'').toString().trim();
+      if(rotulo) colsTurno.push({ci, turno: rotulo});
+    }
+  }
 
   const linhas = [];
   let unidadeAtual = '';
@@ -786,7 +850,12 @@ function parseDimensionamentoGeral(ws){
     const cargo = idxC>=0 ? (row[idxC]||'').toString().trim() : '';
     if(!cargo) continue;
     const u = detectaUnidade(unidadeAtual) || unidadeAtual;
-    linhas.push({u, c: cargo, s: Number(row[idxS])||0, r: Number(row[idxR])||0});
+    const porTurno = {};
+    colsTurno.forEach(({ci,turno})=>{
+      const v = Number(row[ci]);
+      if(!isNaN(v) && v>0) porTurno[turno] = v;
+    });
+    linhas.push({u, c: cargo, s: Number(row[idxS])||0, r: Number(row[idxR])||0, porTurno});
   }
   return linhas;
 }
