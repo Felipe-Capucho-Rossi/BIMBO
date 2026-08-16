@@ -952,26 +952,79 @@ function switchTab(tab){
 
 /* Charts */
 let GR={};
+let __renderGen=0; // token de renderização — permite abortar uma renderização
+                    // em lote (Grade Diária) que ficou obsoleta porque o
+                    // usuário trocou o filtro antes dela terminar
 function dc(id){if(GR[id]){GR[id].destroy();delete GR[id];}}
 
+/* Rótulos numéricos sobre as barras. Em gráficos NÃO empilhados (uma barra
+   por categoria, ou barras agrupadas lado a lado) o número vai acima de
+   cada barra, como sempre. Em gráficos EMPILHADOS (ex.: HE 50% + HE 100%
+   na mesma coluna) desenhar um rótulo acima de CADA segmento causava
+   sobreposição — os números de segmentos vizinhos ficavam colados ou
+   ilegíveis quando os valores eram próximos ou pequenos. Para pilhas,
+   agora: o valor de cada segmento vai DENTRO do próprio segmento (só se
+   ele for alto o suficiente para caber o texto) e o TOTAL da coluna vai
+   uma única vez acima do topo da pilha. */
 const LBL_PLUGIN={id:"barlabels",
   afterDatasetsDraw(chart){
     const ctx=chart.ctx;
+    const barDatasets=[];
     chart.data.datasets.forEach((ds,di)=>{
       if(ds.type&&ds.type!=="bar")return;
       const meta=chart.getDatasetMeta(di);
       if(meta.hidden)return;
-      meta.data.forEach((bar,i)=>{
-        const v=ds.data[i];if(!v)return;
+      barDatasets.push({ds,meta});
+    });
+    if(!barDatasets.length)return;
+    const stackIds=new Set(barDatasets.map(b=>b.ds.stack).filter(Boolean));
+    const stacked=barDatasets.length>1&&stackIds.size===1;
+
+    if(!stacked){
+      barDatasets.forEach(({ds,meta})=>{
+        meta.data.forEach((bar,i)=>{
+          const v=ds.data[i];if(!v)return;
+          const lbl=Number.isInteger(v)?String(v):(Math.round(v*10)/10).toString();
+          ctx.save();
+          ctx.font="700 11px Inter,sans-serif";
+          ctx.fillStyle=typeof ds.backgroundColor==="string"?ds.backgroundColor:"#0079C2";
+          ctx.textAlign="center";ctx.textBaseline="bottom";
+          ctx.fillText(lbl,bar.x,bar.y-3);
+          ctx.restore();
+        });
+      });
+      return;
+    }
+
+    const nBars=barDatasets[0].meta.data.length;
+    for(let i=0;i<nBars;i++){
+      let total=0,topY=null,bx=null;
+      barDatasets.forEach(({ds,meta})=>{
+        const v=ds.data[i]||0; total+=v;
+        const bar=meta.data[i]; if(!bar)return;
+        bx=bar.x;
+        if(topY===null||bar.y<topY)topY=bar.y;
+        if(!v)return;
+        const segH=Math.abs(bar.base-bar.y);
+        if(segH<14)return; // segmento fino demais — o número não caberia sem sobrepor
         const lbl=Number.isInteger(v)?String(v):(Math.round(v*10)/10).toString();
         ctx.save();
-        ctx.font="700 11px Inter,sans-serif";
-        ctx.fillStyle=typeof ds.backgroundColor==="string"?ds.backgroundColor:"#0079C2";
-        ctx.textAlign="center";ctx.textBaseline="bottom";
-        ctx.fillText(lbl,bar.x,bar.y-3);
+        ctx.font="700 10px Inter,sans-serif";
+        ctx.fillStyle="#fff";
+        ctx.textAlign="center";ctx.textBaseline="middle";
+        ctx.fillText(lbl,bar.x,(bar.y+bar.base)/2);
         ctx.restore();
       });
-    });
+      if(bx!==null&&total>0){
+        const lblTot=Number.isInteger(total)?String(total):(Math.round(total*10)/10).toString();
+        ctx.save();
+        ctx.font="700 11px Inter,sans-serif";
+        ctx.fillStyle="#0F1B2D";
+        ctx.textAlign="center";ctx.textBaseline="bottom";
+        ctx.fillText(lblTot,bx,topY-3);
+        ctx.restore();
+      }
+    }
   }
 };
 Chart.register(LBL_PLUGIN);
@@ -1111,7 +1164,11 @@ function cons(blocos){
   return{P,FJ:fj,FI:fi,faltas:fj+fi,tot,taxa:tot>0?Math.round(P/tot*1000)/10:0,abs:tot>0?Math.round((fj+fi)/tot*1000)/10:0,nomes:nm.size};
 }
 
-function render(){
+async function render(){
+  const myRenderGen=++__renderGen; // se um novo render() começar antes deste
+                                    // terminar de montar a Grade Diária em
+                                    // lotes, este token muda e a versão
+                                    // antiga se auto-cancela
   const f=getF(), blocos=filtrar(f), c=cons(blocos);
   const unidsAt=[...new Set(blocos.map(b=>b.unidade))];
   document.getElementById("fcount").textContent=blocos.length+" blocos selecionados";
@@ -1298,6 +1355,9 @@ function render(){
   if(!blocos.length){
     gWrapper.innerHTML='<p style="padding:20px;color:#8FA8C4">Selecione filtros para ver a grade.</p>';
     if(gFrozenWrapper)gFrozenWrapper.innerHTML="";
+  } else if(!blocos.some(b=>b.colaboradores.some(cc=>!f.c||cc.cargo===f.c))){
+    gWrapper.innerHTML='<p style="padding:20px;color:#8FA8C4">Nenhum colaborador encontrado para o filtro atual.</p>';
+    gFrozenWrapper.innerHTML="";
   } else {
     const WD_ABBR=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
     const diaInfo=d=>{
@@ -1346,13 +1406,45 @@ function render(){
       return r6+rFerias+r5+r7+r3+r2+r1+r4;
     }
 
-    let gRows="",gRowsFrozen="";
-    blocos.forEach(b=>{
+    /* Dia com "Folga Geral": todos os colaboradores dos blocos que cobrem
+       aquele dia (mesmo mês do bloco) estão em folga — destaca a coluna.
+       Leve (não constrói HTML), então calculado antes do corpo da tabela
+       para o cabeçalho já sair pronto. */
+    const otAgg={};
+    diasOrdem.forEach(d=>{
+      let everyoneFolga=true,anyColab=false;
+      blocos.forEach(b=>{
+        if(!b.resumo[d])return; // esse dia não pertence ao mês desse bloco
+        const colabB=b.colaboradores.filter(cc=>!f.c||cc.cargo===f.c);
+        if(!colabB.length)return;
+        colabB.forEach(cc=>{anyColab=true;if(cc.dias[d]!=="FOLGA")everyoneFolga=false;});
+      });
+      otAgg[d]=(anyColab&&everyoneFolga)?"oa-vermelho":"";
+    });
+    const thDs=diasInfo.map((info,di)=>{
+      const extraCls=otAgg[diasOrdem[di]]?` ${otAgg[diasOrdem[di]]}`:"";
+      return `<th class="${(info.weekend?"th-weekend":"")+extraCls}" title="${info.label}">${diasOrdem[di]}</th>`;
+    }).join("");
+
+    /* Monta o "casco" das duas tabelas (cabeçalho já pronto, corpo vazio) e
+       popula o corpo em lotes — um bloco (unidade+turno+mês) por vez,
+       cedendo à thread principal via requestAnimationFrame entre lotes.
+       Com o dataset grande isso evita travar a aba ("página sem resposta")
+       durante a montagem da tabela. Se o usuário trocar o filtro no meio
+       do processo, myRenderGen deixa de bater com __renderGen e esta
+       renderização antiga se cancela sozinha. */
+    gFrozenWrapper.innerHTML=`<table class="tgrade tgrade-frozen"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Setor</th><th>Cargo</th><th>Turno</th></tr></thead><tbody id="grade-frozen-tbody"></tbody></table>`;
+    gWrapper.innerHTML=`<table class="tgrade tgrade-scroll"><thead><tr>${thDs}<th class="gt-tot gtc-p">Total de Presenças no Mês</th><th class="gt-tot gtc-fj">Total de Faltas Justificadas no Mês</th><th class="gt-tot gtc-fi">Total de Faltas Injustificadas no Mês</th><th class="gt-tot gtc-flg">Total de Folgas no Mês</th><th class="gt-tot gtc-he50">HE 50% no Mês</th><th class="gt-tot gtc-he100">HE 100% no Mês</th><th class="gt-tot gtc-hetot">HE Total no Mês</th></tr></thead><tbody id="grade-scroll-tbody"></tbody></table>`;
+    const gfBody=document.getElementById("grade-frozen-tbody");
+    const gsBody=document.getElementById("grade-scroll-tbody");
+
+    for(const b of blocos){
+      if(myRenderGen!==__renderGen)return; // filtro mudou — aborta esta renderização obsoleta
       const colab=b.colaboradores.filter(cc=>!f.c||cc.cargo===f.c);
-      if(!colab.length)return;
+      if(!colab.length)continue;
       const groupLabel=`${b.unidade} — ${b.turno} — ${b.mes}`;
-      gRowsFrozen+=`<tr class="tgroup-header"><td colspan="5">${groupLabel}</td></tr>`;
-      gRows+=`<tr class="tgroup-header"><td colspan="${totalScrollCols}"></td></tr>`;
+      let gRowsFrozenB=`<tr class="tgroup-header"><td colspan="5">${groupLabel}</td></tr>`;
+      let gRowsB=`<tr class="tgroup-header"><td colspan="${totalScrollCols}"></td></tr>`;
 
       const arr={p:[],fj:[],fi:[],flg:[],fer:[],d:[],ferias:[]};
       diasOrdem.forEach(()=>{arr.p.push(0);arr.fj.push(0);arr.fi.push(0);arr.flg.push(0);arr.fer.push(0);arr.d.push(0);arr.ferias.push(0);});
@@ -1391,41 +1483,22 @@ function render(){
         empScroll+="</tr>";
       });
 
-      gRowsFrozen+=labelRowsFrozen+empFrozen;
-      gRows+=buildValueRows(arr,{p:bTotP,fj:bTotFJ,fi:bTotFI,flg:bTotFLG})+empScroll;
-    });
+      gRowsFrozenB+=labelRowsFrozen+empFrozen;
+      gRowsB+=buildValueRows(arr,{p:bTotP,fj:bTotFJ,fi:bTotFI,flg:bTotFLG})+empScroll;
 
-    if(!gRows){
-      gWrapper.innerHTML='<p style="padding:20px;color:#8FA8C4">Nenhum colaborador encontrado para o filtro atual.</p>';
-      gFrozenWrapper.innerHTML="";
-    } else {
-      /* Dia com "Folga Geral": todos os colaboradores dos blocos que cobrem
-         aquele dia (mesmo mês do bloco) estão em folga — destaca a coluna. */
-      const otAgg={};
-      diasOrdem.forEach(d=>{
-        let everyoneFolga=true,anyColab=false;
-        blocos.forEach(b=>{
-          if(!b.resumo[d])return; // esse dia não pertence ao mês desse bloco
-          const colabB=b.colaboradores.filter(cc=>!f.c||cc.cargo===f.c);
-          if(!colabB.length)return;
-          colabB.forEach(cc=>{anyColab=true;if(cc.dias[d]!=="FOLGA")everyoneFolga=false;});
-        });
-        otAgg[d]=(anyColab&&everyoneFolga)?"oa-vermelho":"";
-      });
-      const thDs=diasInfo.map((info,di)=>{
-        const extraCls=otAgg[diasOrdem[di]]?` ${otAgg[diasOrdem[di]]}`:"";
-        return `<th class="${(info.weekend?"th-weekend":"")+extraCls}" title="${info.label}">${diasOrdem[di]}</th>`;
-      }).join("");
-      gFrozenWrapper.innerHTML=`<table class="tgrade tgrade-frozen"><thead><tr><th>Colaborador</th><th>Unidade</th><th>Setor</th><th>Cargo</th><th>Turno</th></tr></thead><tbody>${gRowsFrozen}</tbody></table>`;
-      gWrapper.innerHTML=`<table class="tgrade tgrade-scroll"><thead><tr>${thDs}<th class="gt-tot gtc-p">Total de Presenças no Mês</th><th class="gt-tot gtc-fj">Total de Faltas Justificadas no Mês</th><th class="gt-tot gtc-fi">Total de Faltas Injustificadas no Mês</th><th class="gt-tot gtc-flg">Total de Folgas no Mês</th><th class="gt-tot gtc-he50">HE 50% no Mês</th><th class="gt-tot gtc-he100">HE 100% no Mês</th><th class="gt-tot gtc-hetot">HE Total no Mês</th></tr></thead><tbody>${gRows}</tbody></table>`;
-      gFrozenWrapper.scrollTop=0;
-      /* Iguala a altura útil (viewport) do painel congelado à do painel
-         rolável, já que o rolável pode ganhar uma barra de rolagem
-         horizontal (muitos dias) que consome altura e o congelado não. */
-      const gs=document.getElementById("grade-scroll");
-      const gf=document.getElementById("grade-frozen");
-      if(gs&&gf){gf.style.maxHeight=gs.clientHeight+"px";}
+      gfBody.insertAdjacentHTML("beforeend",gRowsFrozenB);
+      gsBody.insertAdjacentHTML("beforeend",gRowsB);
+      await new Promise(res=>requestAnimationFrame(res));
     }
+    if(myRenderGen!==__renderGen)return;
+
+    gFrozenWrapper.scrollTop=0;
+    /* Iguala a altura útil (viewport) do painel congelado à do painel
+       rolável, já que o rolável pode ganhar uma barra de rolagem
+       horizontal (muitos dias) que consome altura e o congelado não. */
+    const gs=document.getElementById("grade-scroll");
+    const gf=document.getElementById("grade-frozen");
+    if(gs&&gf){gf.style.maxHeight=gs.clientHeight+"px";}
   }
 
   renderOperacional(f, blocos, diasOrdem);
