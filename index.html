@@ -1450,7 +1450,16 @@ async function render(){
       diasOrdem.forEach(()=>{arr.p.push(0);arr.fj.push(0);arr.fi.push(0);arr.flg.push(0);arr.fer.push(0);arr.d.push(0);arr.ferias.push(0);});
       let bTotP=0,bTotFJ=0,bTotFI=0,bTotFLG=0;
       let empFrozen="",empScroll="";
-      colab.forEach(col=>{
+            /* Loop por colaborador convertido de forEach para for clássico para
+         poder ceder à thread principal PERIODICAMENTE — não apenas uma vez
+         por bloco. Alguns blocos (ex.: RAPOSO/Agosto) têm 100+ colaboradores
+         × 150+ dias cada; processar isso tudo de uma vez, mesmo dentro de
+         um único bloco, já é o suficiente para travar a aba. Cedendo a cada
+         BATCH colaboradores, nenhum "pedaço" de trabalho síncrono fica
+         grande demais, não importa o tamanho do bloco. */
+      const COLAB_BATCH=20;
+      for(let ci=0;ci<colab.length;ci++){
+        const col=colab[ci];
         empFrozen+=`<tr><td title="${col.nome}">${col.nome.length>18?col.nome.substring(0,16)+"…":col.nome}</td>`;
         empFrozen+=`<td title="${b.unidade}">${b.unidade}</td><td title="${col.setor||""}">${col.setor||"—"}</td><td title="${col.cargo}">${col.cargo}</td><td title="${col.turno}">${col.turno}</td></tr>`;
         empScroll+="<tr>";
@@ -1481,7 +1490,11 @@ async function render(){
         const cHETot=cHE50+cHE100;
         empScroll+=`<td class="gt-tot${cP>0?" gtv-p":""}">${cP}</td><td class="gt-tot${cFJ>0?" gtv-fj":""}">${cFJ||"—"}</td><td class="gt-tot${cFI>0?" gtv-fi":""}">${cFI||"—"}</td><td class="gt-tot${cFLG>0?" gtv-flg":""}">${cFLG||"—"}</td><td class="gt-tot${cHE50>0?" gtv-he":""}">${cHE50>0?fmtHoras(cHE50):"—"}</td><td class="gt-tot${cHE100>0?" gtv-he":""}">${cHE100>0?fmtHoras(cHE100):"—"}</td><td class="gt-tot${cHETot>0?" gtv-he":""}">${cHETot>0?fmtHoras(cHETot):"—"}</td>`;
         empScroll+="</tr>";
-      });
+        if(ci>0 && ci%COLAB_BATCH===0){
+          if(myRenderGen!==__renderGen)return;
+          await new Promise(res=>requestAnimationFrame(res));
+        }
+      }
 
       gRowsFrozenB+=labelRowsFrozen+empFrozen;
       gRowsB+=buildValueRows(arr,{p:bTotP,fj:bTotFJ,fi:bTotFI,flg:bTotFLG})+empScroll;
@@ -1501,7 +1514,10 @@ async function render(){
     if(gs&&gf){gf.style.maxHeight=gs.clientHeight+"px";}
   }
 
-  renderOperacional(f, blocos, diasOrdem);
+  await renderOperacional(f, blocos, diasOrdem, myRenderGen);
+  if(myRenderGen!==__renderGen)return;
+  await new Promise(res=>requestAnimationFrame(res));
+  if(myRenderGen!==__renderGen)return;
 
   /* TABELA RESUMO */
   const grupos={};
@@ -1571,7 +1587,7 @@ function operMetaCargo(bloco, cargo){
   return null;
 }
 
-function renderOperacional(f, blocos, diasOrdem){
+async function renderOperacional(f, blocos, diasOrdem, myGen){
   const wrap = document.getElementById("oper-inner");
   if(!wrap) return;
 
@@ -1611,7 +1627,11 @@ function renderOperacional(f, blocos, diasOrdem){
   }
 
   // agrega por bloco+cargo+dia: solicitado + realizado (P por cargo, dentro do próprio bloco)
-  blocoInfo.forEach(info=>{
+  // (convertido de forEach para for clássico + cessão periódica à thread
+  // principal: com muitos blocos/colaboradores essa passada síncrona sozinha
+  // já era suficiente para travar a aba, mesmo com a Grade Diária já em lotes)
+  for(let bi=0;bi<blocoInfo.length;bi++){
+    const info=blocoInfo[bi];
     const {b, metas} = info;
     const agg = {};
     info.cargos.forEach(c=>{ agg[c]={}; diasOrdem.forEach(d=>{ agg[c][d]={sol:0,real:0,fallback:false}; }); });
@@ -1629,7 +1649,12 @@ function renderOperacional(f, blocos, diasOrdem){
       });
     });
     info.agg = agg;
-  });
+    if(bi>0 && bi%8===0){
+      if(myGen!==undefined && myGen!==__renderGen)return;
+      await new Promise(res=>requestAnimationFrame(res));
+    }
+  }
+  if(myGen!==undefined && myGen!==__renderGen)return;
 
   // KPIs consolidados (soma de todos os blocos/cargos do filtro atual)
   let totSol=0, totReal=0; const diasComDadoSet=new Set(); const cargosUnicos=new Set();
@@ -1652,10 +1677,13 @@ function renderOperacional(f, blocos, diasOrdem){
   // tabela agrupada por Unidade — Turno — Mês (cabeçalho de grupo), linhas =
   // cargo, colunas = dias, célula = realizado/solicitado daquele bloco
   const thDs = diasInfo.map((info,di)=>`<th class="${info.weekend?"th-weekend":""}" title="${info.label}">${diasOrdem[di]}</th>`).join("");
-  let rows = "";
-  blocoInfo.forEach(info=>{
+  wrap.innerHTML = `<table class="tgrade toper"><thead><tr><th class="tal">Cargo</th>${thDs}</tr></thead><tbody id="oper-tbody"></tbody></table>`
+    + (usouFallback ? '<p style="padding:8px 16px;font-size:11px;color:var(--tx-muted)">~ = meta não veio da Planilha de Presença Diária desse turno; foi cruzada com o Dimensionamento solicitado no Controle de Contratações (não varia dia a dia dentro do mês).</p>' : '');
+  const operBody = document.getElementById("oper-tbody");
+  for(let bi=0;bi<blocoInfo.length;bi++){
+    const info=blocoInfo[bi];
     const {b, agg} = info;
-    rows += `<tr class="tgroup-header"><td colspan="${diasOrdem.length+1}">${b.unidade} — ${b.turno} — ${b.mes}</td></tr>`;
+    let rows = `<tr class="tgroup-header"><td colspan="${diasOrdem.length+1}">${b.unidade} — ${b.turno} — ${b.mes}</td></tr>`;
     info.cargos.forEach(c=>{
       const cargoTemFallback = diasOrdem.some(d=>agg[c][d].fallback);
       const cells = diasOrdem.map((d,di)=>{
@@ -1668,10 +1696,12 @@ function renderOperacional(f, blocos, diasOrdem){
       }).join("");
       rows += `<tr><td class="tal" style="font-weight:700">${c}${cargoTemFallback?' <span style="color:var(--tx-muted);font-weight:500;font-size:10.5px">(meta ~ via Dimensionamento)</span>':''}</td>${cells}</tr>`;
     });
-  });
-
-  wrap.innerHTML = `<table class="tgrade toper"><thead><tr><th class="tal">Cargo</th>${thDs}</tr></thead><tbody>${rows}</tbody></table>`
-    + (usouFallback ? '<p style="padding:8px 16px;font-size:11px;color:var(--tx-muted)">~ = meta não veio da Planilha de Presença Diária desse turno; foi cruzada com o Dimensionamento solicitado no Controle de Contratações (não varia dia a dia dentro do mês).</p>' : '');
+    operBody.insertAdjacentHTML("beforeend", rows);
+    if(bi>0 && bi%8===0){
+      if(myGen!==undefined && myGen!==__renderGen)return;
+      await new Promise(res=>requestAnimationFrame(res));
+    }
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
