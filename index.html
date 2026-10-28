@@ -198,17 +198,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .pres-cargo-qtd{font-weight:800;color:var(--indigo);background:#EEF2FF;padding:1px 7px;border-radius:10px;font-size:10.5px}
 /* Tabela desligamentos */
 .deslig-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:4px}
-.deslig-table thead tr{background:#FEF2F2}
-.deslig-table thead th{padding:6px 10px;text-align:left;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#991b1b;white-space:nowrap}
+.deslig-table thead tr{background:#EEF1F5}
+.deslig-table thead th{position:sticky;top:0;z-index:2;background:#EEF1F5;box-shadow:0 1px 0 #D5DAE1;padding:6px 10px;text-align:left;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#4B5768;white-space:nowrap}
 .deslig-table tbody tr{border-bottom:1px solid var(--border-light)}
 .deslig-table tbody tr:hover{background:#FFF7ED}
 .deslig-table tbody td{padding:6px 10px;font-size:11px;vertical-align:top}
 .deslig-table td.td-nome{font-weight:700;color:var(--tx-primary)}
-.deslig-table td.td-subst{font-weight:600;color:var(--green)}
+.deslig-table td.td-subst{font-weight:600;color:#3BA3E0}
 .deslig-table td.td-motivo{color:var(--tx-secondary)}
 .deslig-table td.td-data{color:var(--tx-muted);white-space:nowrap}
 .pill-deslig{background:#FEE2E2;color:#991b1b;padding:1px 7px;border-radius:10px;font-size:9.5px;font-weight:700}
-.pill-subst{background:#D1FAE5;color:#065f46;padding:1px 7px;border-radius:10px;font-size:9.5px;font-weight:700}
+.pill-subst{background:#E0F1FC;color:#3BA3E0;padding:1px 7px;border-radius:10px;font-size:9.5px;font-weight:700}
 /* Filtros presença */
 .pres-filtros{padding:9px 16px;background:#F8FAFC;border-bottom:1px solid var(--border-light);display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:4px}
 .pres-sec-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--tx-muted);margin:14px 0 8px;display:flex;align-items:center;gap:8px}
@@ -738,7 +738,7 @@ footer strong{color:var(--tx-secondary)}
             <thead><tr>
               <th>Unidade</th><th>Mês</th>
               <th>Colaborador Desligado</th><th>Data Deslig.</th><th>Motivo</th>
-              <th>Substituto</th><th>Dt. Admissão</th><th>Dt. Integração</th><th>Observação</th>
+              <th>Colaborador Admitido</th><th>Dt. Admissão</th><th>Dt. Integração</th><th>Observação</th>
             </tr></thead>
             <tbody id="deslig-tbody"></tbody>
           </table>
