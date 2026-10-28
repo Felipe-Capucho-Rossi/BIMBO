@@ -1046,11 +1046,12 @@ function optBars(maxY,suf){
 }
 function optStack(suf){
   return{responsive:true,maintainAspectRatio:false,
+    layout:{padding:{top:24,right:8}},
     plugins:{legend:{display:true,position:"bottom",labels:{font:{size:11,family:"Inter"},boxWidth:12,usePointStyle:true,color:"#4B5768"}},
              tooltip:{bodyFont:{family:"Inter"},callbacks:{label:ctx=>ctx.dataset.label+": "+(Math.round(ctx.parsed.y*10)/10)+(suf||"")}}},
     scales:{
-      x:{stacked:true,grid:{display:false},ticks:{color:"#0F1B2D",font:{size:11,weight:"700",family:"Inter"}}},
-      y:{stacked:true,grid:{color:"#EAECF0"},ticks:{color:"#8FA8C4",font:{size:10,family:"Inter"}}}
+      x:{stacked:true,grid:{display:false},ticks:{color:"#0F1B2D",font:{size:11,weight:"700",family:"Inter"},autoSkip:false,maxRotation:0}},
+      y:{stacked:true,beginAtZero:true,grace:"15%",grid:{color:"#EAECF0"},ticks:{color:"#8FA8C4",font:{size:10,family:"Inter"}}}
     }};
 }
 
@@ -1810,7 +1811,8 @@ function renderHE(f, blocos){
     if(f.c&&!b.colaboradores.some(cc=>cc.cargo===f.c))return false;
     return true;
   });
-  const porMes=MESES.map(m=>{
+  const mesesEvo=MESES_ORDEM.filter(m=>DADOS.some(b=>b.mes===m));
+  const porMes=(mesesEvo.length?mesesEvo:MESES).map(m=>{
     const l=heColabList(blocosEvo.filter(b=>b.mes===m));
     return{mes:m,he50:l.reduce((s,x)=>s+x.he50,0),he100:l.reduce((s,x)=>s+x.he100,0)};
   });
@@ -1818,14 +1820,14 @@ function renderHE(f, blocos){
   GR.heEvo=new Chart(document.getElementById("chart-he-evolucao"),{
     data:{labels:porMes.map(x=>x.mes),
       datasets:[
-        {type:"line",label:"HE 50%",data:porMes.map(x=>Math.round(x.he50*10)/10),borderColor:C.blue,backgroundColor:"transparent",borderWidth:2,tension:.3,pointRadius:3},
-        {type:"line",label:"HE 100%",data:porMes.map(x=>Math.round(x.he100*10)/10),borderColor:C.red,backgroundColor:"transparent",borderWidth:2,tension:.3,pointRadius:3}
+        {type:"bar",label:"HE 50%",data:porMes.map(x=>Math.round(x.he50*10)/10),backgroundColor:C.blue,borderRadius:4,maxBarThickness:36},
+        {type:"bar",label:"HE 100%",data:porMes.map(x=>Math.round(x.he100*10)/10),backgroundColor:C.red,borderRadius:4,maxBarThickness:36}
       ]},
-    options:{responsive:true,maintainAspectRatio:false,
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:24,right:8}},
       plugins:{legend:{display:true,position:"bottom",labels:{font:{size:11,family:"Inter"},boxWidth:12,usePointStyle:true,color:"#4B5768"}},
         tooltip:{bodyFont:{family:"Inter"},callbacks:{label:ctx=>ctx.dataset.label+": "+fmt1(ctx.parsed.y)+"h"}}},
       scales:{x:{grid:{display:false},ticks:{color:"#0F1B2D",font:{size:11,weight:"700",family:"Inter"}}},
-        y:{grid:{color:"#EAECF0"},ticks:{color:"#8FA8C4",font:{size:10,family:"Inter"}}}}}
+        y:{beginAtZero:true,grace:"15%",grid:{color:"#EAECF0"},ticks:{color:"#8FA8C4",font:{size:10,family:"Inter"}}}}}
   });
 
   /* Por unidade — barras empilhadas */
@@ -1834,8 +1836,8 @@ function renderHE(f, blocos){
   GR.heUnid=new Chart(document.getElementById("chart-he-unidade"),{
     data:{labels:porUnid.map(x=>x.chave.replace("ANHANGUERA PRIMÁRIA","ANH.PRIM.").replace("ANHANGUERA SECUNDÁRIA","ANH.SEC.").replace("SANTO ANDRÉ","S.ANDRÉ")),
       datasets:[
-        {type:"bar",label:"HE 50%",data:porUnid.map(x=>Math.round(x.he50*10)/10),backgroundColor:C.blue,borderRadius:4,stack:"he"},
-        {type:"bar",label:"HE 100%",data:porUnid.map(x=>Math.round(x.he100*10)/10),backgroundColor:C.red,borderRadius:4,stack:"he"}
+        {type:"bar",label:"HE 50%",data:porUnid.map(x=>Math.round(x.he50*10)/10),backgroundColor:C.blue,borderRadius:4,stack:"he",maxBarThickness:72},
+        {type:"bar",label:"HE 100%",data:porUnid.map(x=>Math.round(x.he100*10)/10),backgroundColor:C.red,borderRadius:4,stack:"he",maxBarThickness:72}
       ]},
     options:optStack("h")
   });
