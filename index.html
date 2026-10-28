@@ -1905,6 +1905,7 @@ document.getElementById("nav-kpi").classList.add("active");
    ═══════════════════════════════════════════════════════════════════ */
 
 let DIM_DADOS;
+let DIM_MES = [];
 
 // ── helpers ──────────────────────────────────────────────────────────
 // Quando não há solicitação (s=0) mas existe contratado (r>0), não é "0%
@@ -1947,10 +1948,21 @@ function dimSituacao(s, r){
 function renderDim(){
   const fU = document.getElementById('dim-f-uni').value;
   const fC = document.getElementById('dim-f-crg').value;
-  const dados = DIM_DADOS.filter(d => (!fU || d.u === fU) && (!fC || d.c === fC));
+  // Mês selecionado no filtro principal → quadro solicitado × contratados DAQUELE mês
+  // (DIM_MES). Sem mês, mantém a posição mais recente de cada unidade (DIM_DADOS).
+  const fM = (document.getElementById('f-mes')||{}).value || '';
+  const base = fM ? (DIM_MES||[]).filter(d => d.mes === fM) : DIM_DADOS;
+  const dados = base.filter(d => (!fU || d.u === fU) && (!fC || d.c === fC));
+  let fonteTxt = '';
+  if(fM && dados.length){
+    const fs = new Set(dados.map(d=>d.fs)), fr = new Set(dados.map(d=>d.fr));
+    const nomeS = fs.size===1 ? (fs.has('P') ? 'planilha de presença' : 'Controle de Contratações') : 'planilha de presença / Controle de Contratações';
+    const nomeR = fr.size===1 ? (fr.has('P') ? 'ativos + afastados (planilha + espelho)' : 'Controle de Contratações') : 'ativos + afastados (planilha + espelho) / Controle de Contratações';
+    fonteTxt = ' · Solicitado: ' + nomeS + ' · Contratados: ' + nomeR;
+  }
 
   document.getElementById('dim-filtro-label').textContent =
-    (fU || 'Todas as unidades') + ' · ' + (fC || 'Todos os cargos');
+    (fU || 'Todas as unidades') + ' · ' + (fC || 'Todos os cargos') + (fM ? ' · ' + fM : ' · posição mais recente') + fonteTxt;
 
   // ── KPIs ─────────────────────────────────────────────────────────
   const totS = dados.reduce((a,d)=>a+d.s,0);
@@ -2060,7 +2072,7 @@ function renderDim(){
   }).join('');
 
   document.getElementById('dim-cards').innerHTML = cardsHtml ||
-    '<div style="padding:24px;color:var(--tx-muted);text-align:center">Nenhum dado para os filtros selecionados.</div>';
+    ('<div style="padding:24px;color:var(--tx-muted);text-align:center">'+(fM ? 'Sem quadro solicitado informado para '+fM+' nas planilhas e no Controle de Contratações.' : 'Nenhum dado para os filtros selecionados.')+'</div>');
 
   // ── Tabela detalhada ─────────────────────────────────────────────
   const tbody = document.getElementById('dim-tbody');
@@ -2206,6 +2218,7 @@ async function carregarDadosSupabase(){
   (data || []).forEach(r => mapa[r.chave] = r.payload);
   DADOS = mapa.DADOS || [];
   DIM_DADOS = mapa.DIM_DADOS || [];
+  DIM_MES = mapa.DIM_MES || [];
   PRESENCA_DADOS = mapa.PRESENCA_DADOS || [];
   popularFiltros();
   render();
