@@ -204,7 +204,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx-primary);font-s
 .deslig-table tbody tr:hover{background:#FFF7ED}
 .deslig-table tbody td{padding:6px 10px;font-size:11px;vertical-align:top}
 .deslig-table td.td-nome{font-weight:700;color:var(--tx-primary)}
-.deslig-table td.td-subst{font-weight:600;color:#3BA3E0}
+.deslig-table td.td-subst{font-weight:600;color:#000}
 .deslig-table td.td-motivo{color:var(--tx-secondary)}
 .deslig-table td.td-data{color:var(--tx-muted);white-space:nowrap}
 .pill-deslig{background:#FEE2E2;color:#991b1b;padding:1px 7px;border-radius:10px;font-size:9.5px;font-weight:700}
@@ -2094,7 +2094,7 @@ function renderPresenca() {
     {lbl:'Faltas Injustificadas', val:totFI.toLocaleString('pt-BR'), cls:'k-red', sub:'FI acumuladas no período'},
     {lbl:'Folgas Registradas', val:totFolga.toLocaleString('pt-BR'), cls:'', sub:'Total de folgas no período'},
     {lbl:'Desligamentos', val:totDeslig, cls:'k-red', sub:'Colaboradores desligados'},
-    {lbl:'Contratações/Subst.', val:totSubst, cls:'k-green', sub:'Substitutos admitidos'},
+    {lbl:'Colaboradores Admitidos', val:totSubst, cls:'k-green', sub:'Colaboradores admitidos'},
     {lbl:'Dimensionamento Total', val:totDim, cls:'k-indigo', sub:'Quadro solicitado (soma)'},
   ].map(k=>`<div class="kpi ${k.cls}"><div class="kpi-lbl">${k.lbl}</div><div class="kpi-val">${k.val}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
 
