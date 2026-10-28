@@ -2107,7 +2107,7 @@ function renderPresenca() {
       <div class="pres-cargo-row">
         <span class="pres-cargo-nome">${c}</span>
         <span class="pres-cargo-qtd">${v}</span>
-      </div>`).join('') || '<div style="font-size:10.5px;color:var(--tx-muted);padding:4px 0">Dimensionamento único: <b>${q.dim_total||"—"}</b></div>';
+      </div>`).join('') || '';
 
     const taxaP = (tm.total_presencas && (tm.total_presencas + tm.total_fj + tm.total_fi) > 0)
       ? Math.round(tm.total_presencas / (tm.total_presencas + tm.total_fj + tm.total_fi) * 100)
